@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*{
+    box-sizing: border-box;
+    /* color: white; */
+}
+
+
+body{
+    background-color: rgb(24, 24, 24);
+    /* height: 100vh; */
+}
+
+.input_box {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.input_box > input {
+    flex: 1;
+    outline: none;
+}
