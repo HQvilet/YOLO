@@ -33,7 +33,17 @@ const conversationSchema = new mongoose.Schema({
         type: String,
         require: true,
         enum: ["direct", "group"]
-    }
+    },
+    lastMessage: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Message",
+    },
+    unreadCounts: {
+      type: Map,
+      of: Number,
+      default: {},
+    },
+
 },{timestamps:true})
 
 conversationSchema.index({"participant.userID": 1, lastMessageAt: -1})

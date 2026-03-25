@@ -15,6 +15,7 @@
     "noEmit": true,
     "emitDeclarationOnly": true,
     "rewriteRelativeImportExtensions": true,
+
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],

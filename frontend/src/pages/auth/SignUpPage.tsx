@@ -7,13 +7,8 @@ import { FaEye } from 'react-icons/fa';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import api from "../../services/api.config.ts"
-
-interface UserSignUp{
-        fullname: string,
-        username: string,
-        email: string,
-        password: string,
-}
+import type { UserSignUp } from '../../typedef/user.type.ts';
+import { useAuthSignUp } from '../../hooks/handleAuth.ts';
 
 const SignUpPage = () => {
 
@@ -39,21 +34,14 @@ const SignUpPage = () => {
         mutate: signUp, 
         isError,
         error,
-    } = useMutation({
-        mutationFn: async (authData: UserSignUp) => {
-            await api.post("/api/auth/signup",
-                authData,
-            ).then(res => {
-                console.log(res)
-            }).catch(err => {
-                console.log(err)
-            })
-        },
+    } = useAuthSignUp({
         onSuccess: () => {
             console.log("Sign up successfully.")
             queryClient.invalidateQueries({queryKey: ["authUser"]})
         }
-    })
+    }) 
+    
+    
     
 
     return (

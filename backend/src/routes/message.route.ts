@@ -1,14 +1,19 @@
 import express from "express"
 
 import { jwtTokenVerifier } from "../library/middleware/jwtTokenVerify.ts";
-import { sendMessage } from "../controller/message.controller.ts";
+import { deleteAllMessages, getAllMessageFromConversation, sendDirectMessage, sendGroupMessage, sendMessage } from "../controller/message.controller.ts";
 
 
 const route = express.Router();
 
 route.use(jwtTokenVerifier)
 
-route.post("/send", sendMessage)
+route.get("/:conversationID", getAllMessageFromConversation)
 
+route.post("/send", sendMessage)
+route.post("/direct", sendDirectMessage)
+route.post("/group", sendGroupMessage)
+
+route.delete("/", deleteAllMessages)
 
 export default route;

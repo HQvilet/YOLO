@@ -1,7 +1,7 @@
 import React from 'react'
-import LeftSideBar from '../../layout/LeftSideBar'
-import PostsPage from '../post/PostsPage'
-import RightSideBar from '../../layout/RightSideBar'
+import LeftSideBar from '../layout/LeftSideBar'
+import PostsPage from '../layout/PostsPage'
+import RightSideBar from '../layout/RightSideBar'
 
 const HomePage = () => {
   return (

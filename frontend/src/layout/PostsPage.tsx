@@ -1,7 +1,7 @@
 import React from 'react'
-import Post from '../../components/post/Post'
-import Modal from '../../components/modal/Modal'
-import CreatePost from '../../components/post/CreatePost'
+import Post from '../components/post/Post'
+import Modal from '../components/modal/Modal'
+import CreatePost from '../components/post/CreatePost'
 
 const CreatePostHeader = () => {
   return (

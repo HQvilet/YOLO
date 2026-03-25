@@ -14,14 +14,13 @@ import messageRoute from "./routes/message.route.ts"
 //controllers
 
 //services
+
 import { connectDB } from "./services/connectDB.service.ts";
 import "./services/storage.service.ts";
-
 dotenv.config();
- 
-const PORT = parseInt(process.env.PORT || "5000");
+import { app, server } from "./socket/socket.ts"
 
-const app = express()
+const PORT = parseInt(process.env.PORT || "5000");
 
 app.use(cors({
     origin: true,
@@ -34,18 +33,17 @@ app.use(cookieParser());
 app.use("/api/auth", authRoute)
 app.use("/api/user", userRoute)
 
-app.use("/api/user/friend", friendRoute)
+app.use("/api/friend", friendRoute)
 app.use("/api/conversation", conversationRoute)
 app.use("/api/message", messageRoute)
 
 app.use("/api/cloudinary", cloudinaryRoute)
 
-
 app.get("/*splat", (req: Request, res: Response) => {
     res.status(404).send("Page not found : 404");
 })
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     connectDB();
     console.log(`+ Listening on port ${PORT}`);
 });

@@ -1,10 +1,9 @@
 import React from 'react'
 import type { UserInterface } from '../../typedef/user.type'
-import { useSendFriendRequest } from '../../hooks/handleFriend'
 
 const RecommendFriend = ({user}: {user: UserInterface}) => {
 
-  const {mutate: sendRequest} = useSendFriendRequest()
+  // const {mutate: sendRequest} = useSendFriendRequest()
 
   return (
     <div className='flex justify-between p-2 bg-zinc-800 rounded-xl'>
@@ -18,7 +17,7 @@ const RecommendFriend = ({user}: {user: UserInterface}) => {
       </div>
       <div className='flex items-center gap-3 mr-2'>
         <button className='bg-violet-400 rounded-lg p-2'
-          onClick={() => sendRequest(user._id)}
+          // onClick={() => sendRequest(user._id)}
         >
           Send
         </button>

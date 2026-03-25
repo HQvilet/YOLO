@@ -9,7 +9,7 @@ route.use(jwtTokenVerifier)
 
 // get all friends of a user
 route.get("/:userID/all", getAllFriends)
-// get all request
+// get all requests
 route.get("/request", getAllFriendRequests)
 // get recommended user
 route.get("/recommend", getRecommendedFriends)
@@ -17,6 +17,8 @@ route.get("/recommend", getRecommendedFriends)
 route.post("/request/:userID", sendFriendRequest)
 // accept friend request
 route.put("/request/:requestID/accept", acceptFriendRequest)
+// decline friend request
+route.put("/request/:requestID/decline", acceptFriendRequest)
 
 //test:
 route.delete("/request/delete", deleteAllRequest)

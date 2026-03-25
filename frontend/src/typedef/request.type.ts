@@ -1,7 +1,8 @@
+import type { UserInterface } from "./user.type";
 
 export interface RequestInterface{
     _id: string,
-    sender: any,
+    sender: UserInterface,
     recipient: string,
     acceptedAt: Date,
     createdAt: Date,

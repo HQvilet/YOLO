@@ -13,6 +13,7 @@ export const useQueryAuthUser = () => useQuery({
       }).catch(err => {
         console.log(err)
       }),
+    staleTime: 60*1000
 })
 
 export const useQueryUser = (userID: string) => useQuery({

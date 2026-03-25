@@ -1,17 +1,24 @@
 import React from 'react'
 import type { UserInterface } from '../../typedef/user.type'
-import { useChatList } from '../../hooks/store/chatFriendStore'
+import { useChatListStore } from '../../hooks/store/chatFriendStore'
+import type { Conversation } from '../../typedef/conversation.type'
+import { useQuery } from '@tanstack/react-query'
 
-const NavChatAvatar = ({user}: {user: UserInterface}) => {
-  const setChatState = useChatList(state => state.setChatState)
+const NavChatAvatar = ({userID, conversationID}: {userID?: string, conversationID: string}) => {
+  const setChatState = useChatListStore(state => state.setChatState)
+  const {
+    data: conversationData,
+    isError
+  } = useQuery({
+    queryKey: ["conversation", conversationID],
+  })
 
   return (
     <div className='size-12 rounded-full border-2 border-white'>
         <button
-            onClick={e => setChatState(user, true)}
+            onClick={() => setChatState(userID, conversationID, true)}
             className='size-full'>
-          <img 
-            src={user.profileImg}
+          <img
             alt=""
             className=''/>
         </button>

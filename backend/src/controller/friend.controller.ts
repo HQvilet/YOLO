@@ -30,7 +30,7 @@ export const sendFriendRequest = async (req: Request, res: Response) => {
         }))
 
     }catch(error: any){
-        console.log(error.message)
+        console.log(error.stack)
         return res.status(500).json(serverErrorMessage(error.message))
     }
 }
@@ -65,7 +65,7 @@ export const acceptFriendRequest = async (req: Request, res: Response) => {
         }))
 
     }catch(error: any){
-        console.log(error.message)
+        console.log(error.stack)
         return res.status(500).json(serverErrorMessage(error.message))
     }
 }
@@ -100,7 +100,7 @@ export const declineFriendRequest = async (req: Request, res: Response) => {
         }))
 
     }catch(error: any){
-        console.log(error.message)
+        console.log(error.stack)
         return res.status(500).json(serverErrorMessage(error.message))
     }
 }

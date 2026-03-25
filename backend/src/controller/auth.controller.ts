@@ -38,11 +38,9 @@ export const signup = async (req: Request, res: Response) => {
             password: hashedPassword,
             userID: userProfile._id,
         })
-
+        
         if(userAuth){
-            generateTokenAndSetCookies(userAuth.userID, res);
-            
-
+            const accessToken = generateTokenAndSetCookies(userAuth.userID, res);
             
             await userAuth.save();
             await userProfile.save();            
@@ -99,7 +97,7 @@ export const login = async (req: Request, res: Response) => {
             }))
         }
 
-        generateTokenAndSetCookies(userAuth.userID, res);
+        const accessToken = generateTokenAndSetCookies(userAuth.userID, res);
 
         res.status(200).json(serverResponseMessage({
             success: true,
@@ -109,7 +107,7 @@ export const login = async (req: Request, res: Response) => {
                 email: userAuth.email,
                 fullname: userProfile?.fullname,
                 username: userProfile.username,
-            }
+            },
         }));
     }
     catch(error: any){

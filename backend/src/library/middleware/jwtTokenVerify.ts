@@ -21,7 +21,8 @@ export const jwtTokenVerifier = async (req: Request, res: Response, next: NextFu
         
         req.user = user;
         next();
-    }catch(error){
+    }catch(error: any){
+        console.log(error.stack)
         res.status(500).json({error:"Internal server error."})
     }
 }

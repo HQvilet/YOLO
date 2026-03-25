@@ -1,42 +1,86 @@
 import { create } from "zustand";
 import type { UserInterface } from "../../typedef/user.type";
+import { useQuery } from "@tanstack/react-query";
+import type { Conversation } from "../../typedef/conversation.type";
+import api from "../../services/api.config";
 
 type ChatPreview = {
     conversationID?: string,
-    user: UserInterface,
+    userID?: string,
     isOpen: boolean
 }
 
 type ChatStore = {
     chatList: ChatPreview[]
-    addToChatList: (user: UserInterface, conversationID?: string) => void
-    setChatState: (userID: UserInterface, value: boolean) => void
+    addUserToChatList: (userID: string) => void
+    addConversationToChatList: (conversationID: string) => void
+
+    setChatState: (userID?: string, conversationID?: string, value?: boolean) => void
+
+    updateConversationID: (userID: string, conversationID: string) => void
 }
 
-export const useChatList = create<ChatStore>((set) => ({
+export const useChatListStore = create<ChatStore>((set, get) => ({
     chatList: [],
-    addToChatList: (user: UserInterface, conversationID?: string) => set((state) => {
-        if(state.chatList.find(chat => chat.conversationID === conversationID || chat.user === user)){
-            return ({
-                chatList: state.chatList.map(chat => ({
-                    conversationID: chat.conversationID,
-                    user: chat.user,
-                    isOpen: chat.user === user ? true : chat.isOpen}))
+    addUserToChatList: async (userID: string) => {
+        const res = await api.get("/api/conversation/get",{
+            params: {
+                participantID: userID
+            }
+        }).then(res => {
+            get().addConversationToChatList(res.data.data._id)
+        }).catch(() => {
+            set(state => {
+                if(state.chatList.find(chat => chat.userID === userID)){
+                    get().setChatState(userID, undefined, true)
+                    return ({...state.chatList})
+                }
+                return ({
+                    chatList: [...state.chatList,{
+                        userID,
+                        isOpen: true,
+                    }]
+                })
             })
+        })
+    },
+    addConversationToChatList: (conversationID: string) => set(state => {
+        if(state.chatList.find(chat => chat.conversationID === conversationID)){
+            get().setChatState(undefined, conversationID, true)
+            return ({...state.chatList})
         }
         return ({
             chatList: [...state.chatList, ({
-                user,
-                conversationID,
+                conversationID: conversationID,
                 isOpen: true
             })]
         })
     }),
-    setChatState: (userID: UserInterface, value: boolean) => set(state => ({
+    setChatState: (userID?: string, conversationID?: string, value: boolean = false) => {
+        if(conversationID){
+            set(state => ({
+                chatList: state.chatList.map(chat => ({
+                    conversationID: chat.conversationID,
+                    userID: chat.userID,
+                    isOpen: chat.conversationID === conversationID ? value : chat.isOpen
+                }))
+            }))
+        }
+        else if(userID){
+            set(state => ({
+                chatList: state.chatList.map(chat => ({
+                    conversationID: chat.conversationID,
+                    userID: chat.userID,
+                    isOpen: chat.userID === userID ? value : chat.isOpen
+                }))
+            }))
+        }
+    },
+    updateConversationID: (userID: string, conversationID: string) => set(state => ({
         chatList: state.chatList.map(chat => ({
-            conversationID: chat.conversationID,
-            user: chat.user,
-            isOpen: chat.user === userID ? value : chat.isOpen
-      }))
-    })),
+            conversationID: chat.userID === userID ? conversationID : chat.conversationID,
+            userID: chat.userID,
+            isOpen: chat.isOpen
+        }))
+    }))
 }))

@@ -8,11 +8,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import api from "../../services/api.config.ts"
 import { useQueryAuthUser } from '../../hooks/handleUser.ts';
-
-interface UserLogIn {
-    email: string,
-    password: string,
-}
+import type { UserLogIn } from '../../typedef/user.type.ts';
+import { useAuthLogin } from '../../hooks/handleAuth.ts';
 
 const LoginPage = () => {
     const queryClient = useQueryClient();
@@ -36,21 +33,13 @@ const LoginPage = () => {
         mutate: logIn,
         isError,
         error,
-    } = useMutation({
-        mutationFn: async (authData: UserLogIn) => {
-            await api.post("/api/auth/login",
-                authData,
-            ).then(res => {
-                return res.data.data
-            }).catch(err => {
-                console.log(err.message)
-            })
-        },
+    } = useAuthLogin({
         onSuccess: () => {
             console.log("Log in successfully.")
             queryClient.invalidateQueries({queryKey: ["authUser"]})
         }
     })
+    
 
   return (
     <>

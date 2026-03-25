@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken"
 import type { Response } from "express";
 
-export const generateTokenAndSetCookies = async (userID: any, res: Response) => {
+export const generateTokenAndSetCookies = (userID: any, res: Response) => {
     const token = jwt.sign({userID}, process.env.JWT_SECRET || "",{
         expiresIn : '1d',
     });
@@ -12,5 +12,7 @@ export const generateTokenAndSetCookies = async (userID: any, res: Response) => 
         sameSite : "strict",
         secure : process.env.NODE_ENV !== "development",
     })
+
+    return token
     
 }

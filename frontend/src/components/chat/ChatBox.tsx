@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react'
+import React, { useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react'
 
 import { IoClose, IoCall } from "react-icons/io5";
 import { FaVideo, FaMinus, FaPlusCircle } from "react-icons/fa";
@@ -7,75 +7,138 @@ import { HiGif } from "react-icons/hi2";
 import { RiEmojiStickerFill } from "react-icons/ri";
 import { FaPen } from "react-icons/fa6";
 import type { UserInterface } from '../../typedef/user.type';
-import { useChatList } from '../../hooks/store/chatFriendStore';
-
-
-type Message = 
-{
-  user: string,
-  content: string,
-  isNewUserBlock?: boolean,
-  isNewTimeStampBlock?: boolean,
-}
+import { useChatListStore } from '../../hooks/store/chatFriendStore';
+import { useQueryAllMessage, useSendMessage } from '../../hooks/handleMessage';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import api from '../../services/api.config';
+import { useShallow } from 'zustand/shallow';
+import { useQueryAuthUser } from '../../hooks/handleUser';
+import { getTimeDifference } from '../../utils/time.utils';
+import type { Message, MessageContent } from '../../typedef/message.type';
+import defaultAvatar from "../../assets/default_avatar.png"
+import { useSocketStore } from '../../hooks/store/socketStore';
 
 export const MessageBox = () => {
   return (
-    <div>
-
-    </div>
+    <>
+      
+    </>
   )
 }
 
+// group message or direct message
+// conversation is created whenever user send direct message
+// 
+const ChatBox = ({userID, conversationID}: {userID?: string, conversationID: string}) => {
+  const queryClient = useQueryClient()
 
-const ChatBox = ({user}: {user: UserInterface}) => {
+  const {setChatState, updateConversationID} = useChatListStore()
+  const { joinedConversation } = useSocketStore()
 
-  const setChatState = useChatList(state => state.setChatState)
+  const [messageContent, setMessageContent] = useState<MessageContent>({
+    text: "",
+  })
 
-  const me = "Viet";
-  let messages: Message[] = [
-    {user:"Viet", content:"Hello"},
-    {user:"Teo", content:"couple monddddddddddddddddddddddddddddk"},
-    {user:"Viet", content:"Myas asdih asi dasidh Ngu"},
-    {user:"Nhan", content:"askdasdasdas da sd as da sd  adasda asd nasd???"},
-    {user:"Khang", content:"lol aram"},
-    {user:"Khang", content:"lol aram"},
-    {user:"Khang", content:"lol aram"},
-    {user:"Viet", content:"Hello"},
-  ]
+  const { data: authUser } = useQueryAuthUser();
 
-  messages = messages.map((msg, i, arr) => {
-    
+  const {
+    data: conversation,
+    isError
+  } = useQuery({
+    queryKey: ["conversation", conversationID],
+    queryFn: () => 
+      api.get("/api/conversation/get",{
+        params: {
+          participantID: userID,
+          conversationID,
+        }
+      })
+      .then(res => {
+        const data = res.data.data;
+        if(!conversationID && userID){
+          updateConversationID(userID, data._id)
+        }
+        return data
+      }),
+    staleTime: 1000*60
+  })
+
+  const useGroupDisplayInfo: boolean = conversation && conversation.group
+  let otherUser: UserInterface | undefined ;
+
+  
+  if(!useGroupDisplayInfo){
+    if(conversationID)
+      otherUser = conversation?.participants.find((p: any) => p.userID._id !== authUser._id).userID
+    else
+      otherUser = queryClient.getQueryData(["userProfile", userID])
+  }
+
+  const {
+    data: messages
+  } = useQueryAllMessage(conversationID)
+
+  const {
+    mutate: sendMessage,
+  } = useMutation({
+    mutationFn: (message: any) =>
+      api.post("/api/message/direct", {
+        recipientID: userID,
+        conversationID,
+        content: message
+      }),
+    onSuccess: (res) => {
+      const data = res.data.data
+      if(!conversationID && userID){
+        joinedConversation(data.conversationID)
+        updateConversationID(userID, data.conversationID)
+      }
+    }
+  })
+
+  const n_messages = messages?.map<Message>((msg, i, arr) => {
+    msg.createdAt = new Date(msg.createdAt);
+    msg.isNewTimeStampBlock = false;
+    msg.isNewUserBlock = false;
     if(i === 0){
-      msg.isNewUserBlock = true;
+      msg.isNewUserBlock = true
       return msg;
     }
-
-    if(msg.user !== arr[i-1].user){
+    if(msg.senderID !== arr[i-1].senderID){
       msg.isNewUserBlock = true;
-      return msg;
     }
-
+    const {minutes} = getTimeDifference(msg.createdAt, arr[i-1].createdAt)
+    if(minutes > 5){
+      msg.isNewTimeStampBlock = true;
+    }
     return msg;
   })
 
-  console.log(messages)
 
   const handleSendMessage = () => {
-
+    console.log({
+        recipientID: userID,
+        conversationID,
+        content: messageContent
+      })
+    sendMessage(messageContent)
+    setMessageContent({
+      text: ""
+    })
   }
 
   return (
-    <div className='flex flex-col w-[21rem] h-[28rem] bg-zinc-800 text-white rounded-t-xl'>
+    <div className='flex flex-col w-[21rem] h-[28rem] bg-zinc-800 text-white rounded-t-xl border-2 border-b-0 border-zinc-500'>
         {/* chat box header */}
-        <div className='flex justify-between bg-violet-500 rounded-t-xl'>
+        <header className='flex justify-between bg-violet-500 rounded-t-xl'>
           <div className='flex p-1 gap-2 items-center'>
-            <div className='size-8 rounded-full'>
+            <div className='size-8 rounded-full overflow-hidden'>
               <img 
-                src={user.coverImg}
+                src={otherUser?.profileImg || defaultAvatar}
                 alt=""
                 className='self-center object-cover'/>
             </div>
-            <span >{user.username}</span>
+            <span >{useGroupDisplayInfo ? conversation.group.name : otherUser?.username}</span>
           </div>
           <div className='flex p-2 text-xl'>
             <button className='size-8 rounded-full hover:bg-white/20'
@@ -94,26 +157,23 @@ const ChatBox = ({user}: {user: UserInterface}) => {
               <FaMinus className='mx-auto'/>
             </button>
             <button className='size-8 rounded-full hover:bg-white/20'
-              onClick={() => setChatState(user, false)}
+              onClick={() => setChatState(userID, conversationID, false)}
             >
               <IoClose className='mx-auto text-3xl'/>
             </button>
           </div>
-        </div>
+        </header>
         {/* chat box content */}
         <div className='overflow-y-hidden flex-1'>
-          <div className='flex flex-col-reverse justify-start w-full h-full overflow-x-auto p-1 gap-[2px]'>
-            {messages.map((message, i, arr) => {
-              const isMe = message.user === me;
+          <div className='flex flex-col-reverse justify-start w-full h-full overflow-x-auto p-1 gap-[0.2rem]'>
+            {!isError && n_messages?.map((message, i, arr) => {
+              const isMe = message.senderID === authUser._id;
               const prevMsg = arr[i+1];
-              const isInFirstBlock = false;
-              const isInLastBlock = false;
-
-              const boxRounded = "rounded-xl"
+              const isInFirstBlock = message.isNewUserBlock || message.isNewTimeStampBlock;
+              const isInLastBlock = prevMsg?.isNewUserBlock || prevMsg?.isNewTimeStampBlock;
               
               return(
               <>
-                
                 <div className={`flex text-sm ${message.isNewUserBlock || message.isNewTimeStampBlock ? "pb-2" : ""}`}>
                   {!isMe ?
                     (<div className='flex gap-1 items-end w-full'>
@@ -123,26 +183,25 @@ const ChatBox = ({user}: {user: UserInterface}) => {
                           alt="" 
                           className='rounded-full size-full'/>}
                       </div>
-                      <div className='bg-violet-300 rounded-xl p-2 max-w-[70%] overflow-clip'>
-                        <span >
-                          {message.content}
+                      <div className={`bg-violet-300 rounded-sm rounded-r-xl p-2 max-w-[70%] overflow-clip ${!isInFirstBlock || "rounded-bl-xl"} ${!isInLastBlock || "rounded-tl-xl"}`}>
+                        <span>
+                          {message.content?.text}
                         </span>
                       </div>
                     </div>)
                     :
                     (<div className='flex w-full justify-end'>
-                      <div className='flex'>
-                        <div className='basis-12'></div>
-                        <span className='bg-zinc-500 rounded-xl p-2'>{message.content}</span>
+                      <div className={`bg-zinc-500 rounded-sm rounded-l-xl p-2 max-w-[70%] overflow-clip ${!isInFirstBlock || "rounded-br-xl"} ${!isInLastBlock || "rounded-tr-xl"}`}>
+                        <span>{message.content?.text}</span>
                       </div>
                     </div>)
                   }
                   </div>
-                  {prevMsg?.isNewUserBlock &&
-                  (<div className='w-full h-12 flex-none flex'>
-                    <span className='mx-auto my-auto'>12h:30</span>
-                  </div>)
-                }
+                  {prevMsg?.isNewTimeStampBlock &&
+                    (<div className='w-full h-12 flex-none flex'>
+                      <span className='mx-auto my-auto text-gray-400'>{message.createdAt.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</span>
+                    </div>)
+                  }
               </>
             )})}
           </div>
@@ -165,14 +224,30 @@ const ChatBox = ({user}: {user: UserInterface}) => {
                 </button>
               </div>
               <div className='flex-grow'>
-                <input 
-                  type="text"
-                  placeholder='DM Here'
-                  name="textContent"
-                  className='bg-zinc-700 rounded-full w-full p-1 pl-2' />
+                <form action=""
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSendMessage()
+                  }}>
+                  <input 
+                    type="text"
+                    placeholder='DM Here'
+                    name="textContent"
+                    className='bg-zinc-700 rounded-full w-full p-1 pl-2'
+                    value={messageContent.text}
+                    onChange={(e) => {
+                      setMessageContent(prev => ({
+                        ...prev,
+                        text: e.target.value,
+                      }))
+                    }} />
+                </form>
               </div>
               <div className='flex-none'>
-                <button className='size-8 p-1 hover:bg-white/20 rounded-full'>
+                <button 
+                  className='size-8 p-1 hover:bg-white/20 rounded-full'
+                  onClick={() => {handleSendMessage()}}  
+                >
                   <FaPen className='mx-auto'/>
                 </button>
               </div>
