@@ -1,13 +1,34 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import type { UserInterface } from '../../typedef/user.type'
-import { useSendFriendRequest } from '../../hooks/handleFriendRequest'
+import type { UserInterface, UserWithStatus } from '../../typedef/user.type'
 
-const SearchUserPreview = ({user} : {user: UserInterface}) => {
+import { useQueryAuthUser } from '../../features/auth/handleUser'
+import { useSendFriendRequest } from '../../features/friend/handleFriendRequest'
+
+const SearchUserPreview = ({user} : {user: UserWithStatus}) => {
     
     const {
         mutate: sendRequest
-    } = useSendFriendRequest();
+    } = useSendFriendRequest({
+        onSuccess: () => {
+            
+        }
+    });
+
+    // const {} = use
+
+    const {data: authUser} = useQueryAuthUser()
+
+    let userStatus : "none" | "waitResponse" | "respond" | "friend" = "none"
+    if(!user.requestStatus){
+        userStatus = "none"
+    }else if(user.requestStatus.status === "accepted"){
+        userStatus = "friend"
+    }else if(user.requestStatus.sender === authUser?._id){
+        userStatus = "waitResponse"
+    }else {
+        userStatus = "respond"
+    }
 
     return (
     <div className='flex gap-2 border-b-[0.1rem] border-zinc-700 '>
@@ -26,20 +47,45 @@ const SearchUserPreview = ({user} : {user: UserInterface}) => {
                 </Link>
             </span>
             <span className='text-gray-400 text-sm max-w-[95%]'>
-                Short description
+                {/* Short description */}
+                {userStatus}
             </span>
             <div className='p-1 pl-4'>
                 8 Mutual Friends
             </div>
         </div>
-        <div className='self-center'>
-            <button className='px-2 py-1 bg-violet-500/50 rounded-lg text-violet-300 hover:bg-violet-600'
+        <div className='flex gap-2 self-center'>
+            {userStatus === "none" && <button className='px-2 py-1 bg-violet-500/50 rounded-lg text-violet-300 hover:bg-violet-600'
                 onClick={() => {
                     sendRequest(user._id)
                 }}
             >
                 Add Friend
-            </button>
+            </button>}
+            {(userStatus == "friend" || userStatus === "waitResponse") && <button className='px-2 py-1 bg-violet-500/50 rounded-lg text-violet-300 hover:bg-violet-600'
+                onClick={() => {
+                    sendRequest(user._id)
+                }}
+            >
+                Message
+            </button>}
+            {userStatus === "respond" && 
+            <>
+                <button className='px-2 py-1 bg-violet-500/50 rounded-lg text-violet-300 hover:bg-violet-600'
+                    onClick={() => {
+                        sendRequest(user._id)
+                    }}
+                >
+                    Accept
+                </button>
+                <button className='px-2 py-1 bg-red-500/50 rounded-lg text-red-300 hover:bg-red-500/70'
+                    onClick={() => {
+                        sendRequest(user._id)
+                    }}
+                >
+                    Decline
+                </button>
+            </>}
         </div>
     </div>
   )

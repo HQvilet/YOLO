@@ -1,3 +1,4 @@
+import type { Message } from "./message.type"
 import type { UserInterface } from "./user.type"
 
 export interface Conversation{
@@ -12,5 +13,6 @@ export interface Conversation{
         joinedAt: Date,
         nickName?: string
     }[],
-    
+    lastMessageAt: Date,
+    lastMessage: Message,
 }

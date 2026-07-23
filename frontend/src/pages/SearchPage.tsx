@@ -1,10 +1,11 @@
 import React from 'react'
 
 import SearchUserPreview from '../components/search/SearchUserPreview'
-import { useQueryAllRecommendedUser } from '../hooks/handleFriend'
+import { useQueryAllRecommendedUser } from '../features/friend/handleFriend'
 
 const SearchPage = () => {
   const {data: recommends} = useQueryAllRecommendedUser()
+  console.log(recommends)
   return (
     <div className='flex flex-row gap-2 relative top-[10vh] text-white'>
       <div className='basis-96 stickey min-h-[100vh] h-auto overflow-y-auto overflow-x-clip hidden lg:block'>

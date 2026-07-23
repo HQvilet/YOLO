@@ -15,6 +15,10 @@ export const getAllConversations = async (req: Request, res: Response) => {
         .populate({
             path: "participants.userID",
         })
+        .populate("lastMessage")
+        .sort({
+            lastMessageAt: -1,
+        })
         
         return res.status(200).json(serverResponseMessage({
             success: true,
@@ -34,18 +38,7 @@ export const getConversation = async (req: Request, res: Response) => {
 
         let conversation;
 
-        if(participantID && conversationID){
-            conversation = await Conversation.findOne({
-                _id: conversationID,
-                "participants.userID": {
-                    $all: [userID, participantID]
-                },
-                type: "direct"
-            }).populate({
-                path: "participants.userID",
-            })
-        }
-        else if(conversationID){
+        if(conversationID){
             conversation = await Conversation.findOne({
                 _id: conversationID,
                 "participants.userID": {$in: userID}
@@ -69,6 +62,7 @@ export const getConversation = async (req: Request, res: Response) => {
                 message: "Bad request.",
             }))
         }
+
         
         if(!conversation){
             return res.status(404).json(serverResponseMessage({

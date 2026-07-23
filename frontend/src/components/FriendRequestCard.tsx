@@ -1,33 +1,21 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import api from '../services/api.config'
+import api from '../lib/api.config'
 import { useMutation } from '@tanstack/react-query'
 import type { RequestInterface } from '../typedef/request.type'
 
 import defaultAvatar from "../assets/default_avatar.png"
+import { useAcceptFriendRequest, useDeclineFriendRequest } from '../features/friend/handleFriendRequest'
 
 const FriendRequestCard = ({request}: {request: RequestInterface}) => {
 
   const {
     mutate: accept
-  } = useMutation({
-    mutationFn: (requestID: string) => 
-        api.put(`/api/friend/request/${requestID}/accept`),
-    onSuccess: (data) => {
-      console.log("Accepted: ",data.data) 
-    }
-  })
+  } = useAcceptFriendRequest()
 
   const {
     mutate: decline
-  } = useMutation({
-    mutationFn: (requestID: string) => 
-      api.post(`/api/friend/${requestID}/decline`)
-        .then(res => res.data.data),
-    onSuccess: (data) => {
-      console.log("Decline: ",data.data) 
-    }
-  })
+  } = useDeclineFriendRequest()
 
   return (
     <div className='flex flex-col bg-zinc-800 rounded-lg border-[1px] border-zinc-700 overflow-hidden h-full'>

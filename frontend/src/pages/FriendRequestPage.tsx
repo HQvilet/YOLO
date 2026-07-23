@@ -3,14 +3,13 @@ import React from 'react'
 import { IoMdSettings } from "react-icons/io";
 
 import FriendRequestCard from '../components/FriendRequestCard';
+import { useQueryAllRequests } from '../features/friend/handleFriendRequest';
 
-import { useQueryAllRequests } from '../hooks/handleFriendRequest';
 
 const FriendRequestPage = () => {
   const {
     data: requests
   } = useQueryAllRequests();
-  console.log(requests)
   
   return (
     <div className='flex flex-row gap-2 relative top-[10vh] text-white'>
@@ -29,7 +28,7 @@ const FriendRequestPage = () => {
           </header>
           {/*Frienrequest cards Container */}
           <div className='grid grid-cols-5 gap-5'>
-            {requests?.map(request => (<FriendRequestCard request={request}/>))}
+            {requests?.map((request: any) => (<FriendRequestCard request={request}/>))}
           </div>
           <div>
             

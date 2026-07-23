@@ -6,5 +6,5 @@ export interface RequestInterface{
     recipient: string,
     acceptedAt: Date,
     createdAt: Date,
-    status: "accepted" | "pending"
+    requestStatus: any
 }

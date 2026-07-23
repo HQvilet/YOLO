@@ -1,12 +1,21 @@
 import type { Request, Response } from "express"
 import UserProfile from "../model/user.profile.model.ts";
 import { serverErrorMessage, serverResponseMessage } from "../declare/response.ts";
+import mongoose from "mongoose";
+import { getUserQueryWithRequestStatus } from "../db_query/db_query.ts";
 
 export const getUserProfile = async (req: Request, res: Response) => {
     try{
-        const {userID} = req.params;
+        const { userID } = req.params;
+        const authUserID = req.user._id
 
-        const user = await UserProfile.findById(userID);
+        const [user] = await UserProfile.aggregate([{
+            $match: {
+                _id: new mongoose.Types.ObjectId(userID as string)
+            }
+        },
+            ...getUserQueryWithRequestStatus(authUserID)
+        ])
         if(!user){
             return res.status(400).json(serverResponseMessage({
                 success: false,
@@ -72,7 +81,15 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
 export const getAllUsers = async (req: Request, res: Response) => {
     try{
-        const users = await UserProfile.find({});
+        // const users = await UserProfile.find({ });
+        const userID = req.user._id
+        const users = await UserProfile.aggregate([{
+            $match: {
+                _id: {$ne : userID},
+            }
+        },
+            ...getUserQueryWithRequestStatus(userID)
+        ])
         
         return res.status(200).json(serverResponseMessage({
             success: true,

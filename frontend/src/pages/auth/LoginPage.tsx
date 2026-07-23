@@ -6,10 +6,10 @@ import { MdOutlineEmail, MdPassword } from 'react-icons/md';
 import { FaEye } from 'react-icons/fa'; 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import api from "../../services/api.config.ts"
-import { useQueryAuthUser } from '../../hooks/handleUser.ts';
+import api from "../../lib/api.config.ts"
+import { useQueryAuthUser } from '../../features/auth/handleUser.ts';
 import type { UserLogIn } from '../../typedef/user.type.ts';
-import { useAuthLogin } from '../../hooks/handleAuth.ts';
+import { useAuthLogin } from '../../features/auth/handleAuth.ts';
 
 const LoginPage = () => {
     const queryClient = useQueryClient();

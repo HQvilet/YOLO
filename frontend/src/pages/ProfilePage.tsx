@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { data, Link, useParams } from 'react-router-dom'
-import api from '../services/api.config'
+import api from '../lib/api.config'
 import axios from 'axios'
 
 import AvatarImage from '../assets/AvatarImage'
@@ -18,9 +18,10 @@ import { IoMdPersonAdd } from "react-icons/io";
 
 import Post from '../components/post/Post'
 import type { UserImageData } from '../typedef/user.type'
-import { useQueryAuthUser } from '../hooks/handleUser'
-import { useChatListStore } from '../hooks/store/chatFriendStore'
-import { useSendFriendRequest } from '../hooks/handleFriendRequest'
+import { useQueryAuthUser } from '../features/auth/handleUser'
+import { useChatListStore } from '../features/chat/chatFriendStore'
+import { useUploadImage } from '../features/handleUploadImage'
+import { useSendFriendRequest } from '../features/friend/handleFriendRequest'
 
 
 const ProfilePage = () => {
@@ -28,7 +29,7 @@ const ProfilePage = () => {
 
     const { data: authUser } = useQueryAuthUser()
 
-    const isAuthUser = userProfileID === authUser._id; 
+    const isAuthUser = userProfileID === authUser?._id; 
     const isFriend = false;
     
     const [isOpenUploadModal, openUploadModal] = useState<boolean>(false)
@@ -65,6 +66,26 @@ const ProfilePage = () => {
         mutate: sendRequest
     } = useSendFriendRequest()
 
+    const {
+        mutate: uploadImage
+    } = useUploadImage({
+        onSuccess: (res => {
+            console.log(res.data)
+            console.log("Uploaded image to cloudinary.")
+            const uploadResult = res.data
+
+            if(!uploadResult.secure_url){
+                throw new Error("Failed to upload.")
+            }
+
+            setFormData(prev => ({...prev, [currentImgUploadType ?? "profileImg"]: uploadResult.secure_url}))
+            
+            return api.put("/api/user/update", {
+                [currentImgUploadType ?? "profileImg"]: uploadResult.secure_url
+            })
+        })
+    })
+
     const handleImgChange = (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
         const file = e.target.files?.[0]
         const reader = new FileReader()
@@ -80,48 +101,49 @@ const ProfilePage = () => {
         if(!currentImgUploadType || !modalPreview)
             return;
         
-        api.get("/api/cloudinary/sign-delivery")
-            .then(res => {
-                console.log("Get signed url.")
-                const signatureResult = res.data
+        uploadImage([modalPreview])
+        // api.get("/api/cloudinary/sign-delivery")
+        //     .then(res => {
+        //         console.log("Get signed url.")
+        //         const signatureResult = res.data
 
-                if(!signatureResult){
-                    throw new Error("Fail to sign secret url.")
-                }
+        //         if(!signatureResult){
+        //             throw new Error("Fail to sign secret url.")
+        //         }
 
-                const data = new FormData();
+        //         const data = new FormData();
                 
-                data.append("file", modalPreview)
-                data.append("api_key", signatureResult.apiKey)
-                data.append("timestamp", `${signatureResult.timestamp}`)
-                data.append("signature", signatureResult.signature)
+        //         data.append("file", modalPreview)
+        //         data.append("api_key", signatureResult.apiKey)
+        //         data.append("timestamp", `${signatureResult.timestamp}`)
+        //         data.append("signature", signatureResult.signature)
 
-                return axios.post(`https://api.cloudinary.com/v1_1/${signatureResult.cloudName}/image/upload`, data, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                })
-            })
-            .then(res => {
-                console.log("Uploaded image to cloudinary.")
-                const uploadResult = res.data
+        //         return axios.post(`https://api.cloudinary.com/v1_1/${signatureResult.cloudName}/image/upload`, data, {
+        //             headers: {
+        //                 'Content-Type': 'multipart/form-data'
+        //             }
+        //         })
+        //     })
+        //     .then(res => {
+        //         console.log("Uploaded image to cloudinary.")
+        //         const uploadResult = res.data
 
-                if(!uploadResult.secure_url){
-                    throw new Error("Failed to upload.")
-                }
+        //         if(!uploadResult.secure_url){
+        //             throw new Error("Failed to upload.")
+        //         }
 
-                setFormData(prev => ({...prev, [currentImgUploadType]: uploadResult.secure_url}))
+        //         setFormData(prev => ({...prev, [currentImgUploadType]: uploadResult.secure_url}))
                 
-                return api.put("/api/user/update", {
-                    [currentImgUploadType]: uploadResult.secure_url
-                })
-            })
-            .then(res => {
-                console.log("Updated database.", res.data)
-            })
-            .catch(err => 
-                console.log(err)
-            )
+        //         return api.put("/api/user/update", {
+        //             [currentImgUploadType]: uploadResult.secure_url
+        //         })
+        //     })
+        //     .then(res => {
+        //         console.log("Updated database.", res.data)
+        //     })
+        //     .catch(err => 
+        //         console.log(err)
+        //     )
     }
     
 
@@ -152,9 +174,9 @@ const ProfilePage = () => {
             <div className=''>
                 <div className='flex gap-5 border-b-[1px] border-b-gray-400 p-1 pb-2'>
                     <div className='relative'>
-                        <div className='size-36 bg-black rounded-full overflow-hidden'>
-                            <AvatarImage src={formData.profileImg}/>
-                        </div>
+                        <AvatarImage 
+                            src={formData.profileImg}
+                            className='size-36 bg-black rounded-full'/>
                         {isAuthUser && <button 
                             className='absolute bottom-2 right-2 bg-zinc-700 rounded-full p-2 text-lg'
                             onClick={e => {
@@ -238,9 +260,9 @@ const ProfilePage = () => {
             </div>
             {/* Profile Posts */}
             <div className='flex flex-col gap-5 w-[32rem]'>
+                {/* <Post/>
                 <Post/>
-                <Post/>
-                <Post/>
+                <Post/> */}
             </div>
         </div>
 

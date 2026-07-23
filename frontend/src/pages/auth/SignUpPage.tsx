@@ -6,9 +6,9 @@ import { MdOutlineEmail, MdPassword } from 'react-icons/md';
 import { FaEye } from 'react-icons/fa';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import api from "../../services/api.config.ts"
+import api from "../../lib/api.config.ts"
 import type { UserSignUp } from '../../typedef/user.type.ts';
-import { useAuthSignUp } from '../../hooks/handleAuth.ts';
+import { useAuthSignUp } from '../../features/auth/handleAuth.ts';
 
 const SignUpPage = () => {
 

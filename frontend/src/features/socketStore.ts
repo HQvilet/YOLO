@@ -1,8 +1,9 @@
 import {create} from "zustand"
 import { io, type Socket } from "socket.io-client"
-import { addMessageToConversation } from "../handleMessage";
 import { useQueryClient } from "@tanstack/react-query";
 import { data } from "react-router-dom";
+import { updateConversation } from "./chat/handleConversation";
+import { addMessageToConversation } from "./chat/handleMessage";
 
 const baseURL = import.meta.env.VITE_SOCKET_URL
 
@@ -44,6 +45,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
         socket.on("new-message", ({message, conversation, unreadCounts}) => {
             console.log(message)
             addMessageToConversation(conversation._id.toString(), message)
+            updateConversation(conversation._id, message)
         })
     },
     disConnectSocket: () => {

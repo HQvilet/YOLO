@@ -7,16 +7,20 @@ import { HiGif } from "react-icons/hi2";
 import { RiEmojiStickerFill } from "react-icons/ri";
 import { FaPen } from "react-icons/fa6";
 import type { UserInterface } from '../../typedef/user.type';
-import { useChatListStore } from '../../hooks/store/chatFriendStore';
-import { useQueryAllMessage, useSendMessage } from '../../hooks/handleMessage';
+import { useChatListStore } from '../../features/chat/chatFriendStore';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import api from '../../services/api.config';
+import api from '../../lib/api.config';
 import { useShallow } from 'zustand/shallow';
-import { useQueryAuthUser } from '../../hooks/handleUser';
+import { useQueryAuthUser } from '../../features/auth/handleUser';
 import { getTimeDifference } from '../../utils/time.utils';
 import type { Message, MessageContent } from '../../typedef/message.type';
 import defaultAvatar from "../../assets/default_avatar.png"
-import { useSocketStore } from '../../hooks/store/socketStore';
+import { useSocketStore } from '../../features/socketStore';
+import { useQueryConversation } from '../../features/chat/handleConversation';
+import AvatarImage from '../../assets/AvatarImage';
+import { useQueryAllMessage, useSendDirectMessage } from '../../features/chat/handleMessage';
+import Modal from '../modal/Modal';
+import ChatCallVideoStreaming from './ChatCallVideoStreaming';
 
 export const MessageBox = () => {
   return (
@@ -26,9 +30,6 @@ export const MessageBox = () => {
   )
 }
 
-// group message or direct message
-// conversation is created whenever user send direct message
-// 
 const ChatBox = ({userID, conversationID}: {userID?: string, conversationID: string}) => {
   const queryClient = useQueryClient()
 
@@ -44,35 +45,63 @@ const ChatBox = ({userID, conversationID}: {userID?: string, conversationID: str
   const {
     data: conversation,
     isError
-  } = useQuery({
-    queryKey: ["conversation", conversationID],
-    queryFn: () => 
-      api.get("/api/conversation/get",{
-        params: {
-          participantID: userID,
-          conversationID,
-        }
-      })
-      .then(res => {
-        const data = res.data.data;
-        if(!conversationID && userID){
-          updateConversationID(userID, data._id)
-        }
-        return data
-      }),
-    staleTime: 1000*60
+  } = useQueryConversation({
+    conversationID,
+    recipientID: userID
   })
 
-  const useGroupDisplayInfo: boolean = conversation && conversation.group
+const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const [call, setCall] = useState(false);
+
+  // 1. Request access to Camera and Microphone
+  const startMedia = async () => {
+    try {
+      // setError('');
+      // const mediaStream = await navigator.mediaDevices.getUserMedia({
+      //   video: true,
+      //   audio: true, // Set to false if you only need the camera
+      // });
+
+      // setStream(mediaStream);
+
+      // // Attach stream to the <video> element
+      // if (videoRef.current) {
+      //   videoRef.current.srcObject = mediaStream;
+      // }
+      const openNewWindow = () => {
+        window.open(
+          `http://localhost:5001/video-call`,
+          '_blank',
+          'width=800,height=600,noopener,noreferrer'
+        );
+      };
+      openNewWindow();
+
+    } catch (err) {
+      console.error("Error accessing media devices:", err);
+    }
+  };
+
+
+  if(conversation){
+    if(!conversationID && userID){
+      updateConversationID(userID, conversation._id)
+    }
+  }
+
+  const useGroupDisplayInfo: any = conversation && conversation?.group
   let otherUser: UserInterface | undefined ;
 
-  
   if(!useGroupDisplayInfo){
     if(conversationID)
-      otherUser = conversation?.participants.find((p: any) => p.userID._id !== authUser._id).userID
+      otherUser = conversation?.participants.find((p: any) => p.userID._id !== authUser?._id)?.userID
     else
       otherUser = queryClient.getQueryData(["userProfile", userID])
   }
+
+  const userMap = new Map<string, UserInterface>()
+  conversation?.participants.forEach(p => userMap.set(p.userID._id, p.userID))
 
   const {
     data: messages
@@ -80,13 +109,7 @@ const ChatBox = ({userID, conversationID}: {userID?: string, conversationID: str
 
   const {
     mutate: sendMessage,
-  } = useMutation({
-    mutationFn: (message: any) =>
-      api.post("/api/message/direct", {
-        recipientID: userID,
-        conversationID,
-        content: message
-      }),
+  } = useSendDirectMessage({
     onSuccess: (res) => {
       const data = res.data.data
       if(!conversationID && userID){
@@ -116,31 +139,28 @@ const ChatBox = ({userID, conversationID}: {userID?: string, conversationID: str
 
 
   const handleSendMessage = () => {
-    console.log({
-        recipientID: userID,
-        conversationID,
-        content: messageContent
-      })
-    sendMessage(messageContent)
+    sendMessage({
+      recipientID: userID,
+      conversationID,
+      content: messageContent
+    })
+
     setMessageContent({
       text: ""
     })
   }
 
   return (
-    <div className='flex flex-col w-[21rem] h-[28rem] bg-zinc-800 text-white rounded-t-xl border-2 border-b-0 border-zinc-500'>
+    <div className='chatbox flex flex-col w-[21rem] h-[28rem] bg-zinc-950 text-white rounded-t-xl'>
         {/* chat box header */}
         <header className='flex justify-between bg-violet-500 rounded-t-xl'>
           <div className='flex p-1 gap-2 items-center'>
-            <div className='size-8 rounded-full overflow-hidden'>
-              <img 
-                src={otherUser?.profileImg || defaultAvatar}
-                alt=""
-                className='self-center object-cover'/>
-            </div>
-            <span >{useGroupDisplayInfo ? conversation.group.name : otherUser?.username}</span>
+            <AvatarImage 
+              src={otherUser?.profileImg} 
+              className='size-10 rounded-full'/>
+            <span >{useGroupDisplayInfo ? conversation?.group?.name : otherUser?.username}</span>
           </div>
-          <div className='flex p-2 text-xl'>
+          <div className='flex p-2 text-xl items-center'>
             <button className='size-8 rounded-full hover:bg-white/20'
               
             >
@@ -149,7 +169,11 @@ const ChatBox = ({userID, conversationID}: {userID?: string, conversationID: str
             <button className='size-8 rounded-full hover:bg-white/20'
               
             >
-              <FaVideo className='mx-auto'/>
+              <FaVideo className='mx-auto'
+              onClick={() => {
+                // startMedia()
+                setCall(true)
+              }}/>
             </button>
             <button className='size-8 rounded-full hover:bg-white/20'
               
@@ -167,7 +191,7 @@ const ChatBox = ({userID, conversationID}: {userID?: string, conversationID: str
         <div className='overflow-y-hidden flex-1'>
           <div className='flex flex-col-reverse justify-start w-full h-full overflow-x-auto p-1 gap-[0.2rem]'>
             {!isError && n_messages?.map((message, i, arr) => {
-              const isMe = message.senderID === authUser._id;
+              const isMe = message.senderID === authUser?._id;
               const prevMsg = arr[i+1];
               const isInFirstBlock = message.isNewUserBlock || message.isNewTimeStampBlock;
               const isInLastBlock = prevMsg?.isNewUserBlock || prevMsg?.isNewTimeStampBlock;
@@ -178,10 +202,10 @@ const ChatBox = ({userID, conversationID}: {userID?: string, conversationID: str
                   {!isMe ?
                     (<div className='flex gap-1 items-end w-full'>
                       <div className='flex size-8'>
-                        {message.isNewUserBlock && <img 
-                          src="a"
-                          alt="" 
-                          className='rounded-full size-full'/>}
+                        {message.isNewUserBlock && 
+                          <AvatarImage
+                            src={userMap.get(message.senderID)?.profileImg}
+                            className='rounded-full'/>}
                       </div>
                       <div className={`bg-violet-300 rounded-sm rounded-r-xl p-2 max-w-[70%] overflow-clip ${!isInFirstBlock || "rounded-bl-xl"} ${!isInLastBlock || "rounded-tl-xl"}`}>
                         <span>
@@ -192,7 +216,7 @@ const ChatBox = ({userID, conversationID}: {userID?: string, conversationID: str
                     :
                     (<div className='flex w-full justify-end'>
                       <div className={`bg-zinc-500 rounded-sm rounded-l-xl p-2 max-w-[70%] overflow-clip ${!isInFirstBlock || "rounded-br-xl"} ${!isInLastBlock || "rounded-tr-xl"}`}>
-                        <span>{message.content?.text}</span>
+                        <span className='break-all'>{message.content?.text}</span>
                       </div>
                     </div>)
                   }
@@ -224,7 +248,9 @@ const ChatBox = ({userID, conversationID}: {userID?: string, conversationID: str
                 </button>
               </div>
               <div className='flex-grow'>
-                <form action=""
+                <form 
+                  className='input_box'
+                  action=""
                   onSubmit={(e) => {
                     e.preventDefault();
                     handleSendMessage()
@@ -232,6 +258,7 @@ const ChatBox = ({userID, conversationID}: {userID?: string, conversationID: str
                   <input 
                     type="text"
                     placeholder='DM Here'
+                    autoComplete='off'
                     name="textContent"
                     className='bg-zinc-700 rounded-full w-full p-1 pl-2'
                     value={messageContent.text}
@@ -253,6 +280,10 @@ const ChatBox = ({userID, conversationID}: {userID?: string, conversationID: str
               </div>
           </div>
         </div>
+        {call && 
+          <Modal open={call} onClose={() => {setCall(false)}}>
+            <ChatCallVideoStreaming />
+          </Modal>}
     </div>
   )
 }

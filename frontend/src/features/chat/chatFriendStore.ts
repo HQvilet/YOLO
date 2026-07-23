@@ -2,7 +2,7 @@ import { create } from "zustand";
 import type { UserInterface } from "../../typedef/user.type";
 import { useQuery } from "@tanstack/react-query";
 import type { Conversation } from "../../typedef/conversation.type";
-import api from "../../services/api.config";
+import api from "../../lib/api.config";
 
 type ChatPreview = {
     conversationID?: string,

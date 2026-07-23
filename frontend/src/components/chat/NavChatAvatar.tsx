@@ -1,28 +1,47 @@
 import React from 'react'
 import type { UserInterface } from '../../typedef/user.type'
-import { useChatListStore } from '../../hooks/store/chatFriendStore'
+import { useChatListStore } from '../../features/chat/chatFriendStore'
 import type { Conversation } from '../../typedef/conversation.type'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryConversation } from '../../features/chat/handleConversation'
+import AvatarImage from '../../assets/AvatarImage'
+import { useQueryAuthUser } from '../../features/auth/handleUser'
 
 const NavChatAvatar = ({userID, conversationID}: {userID?: string, conversationID: string}) => {
+  const queryClient = useQueryClient()
+  
   const setChatState = useChatListStore(state => state.setChatState)
+
+  const { data: authUser } = useQueryAuthUser();
+
   const {
-    data: conversationData,
+    data: conversation,
     isError
-  } = useQuery({
-    queryKey: ["conversation", conversationID],
+  } = useQueryConversation({
+    conversationID,
+    recipientID: userID,
   })
+  
+
+  const useGroupDisplayInfo: any = conversation && conversation.group
+  let otherUser: UserInterface | undefined ;
+
+  if(!useGroupDisplayInfo){
+    if(conversationID)
+      otherUser = conversation?.participants.find((p: any) => p.userID._id !== authUser?._id)?.userID
+    else
+      otherUser = queryClient.getQueryData(["userProfile", userID])
+  }
 
   return (
-    <div className='size-12 rounded-full border-2 border-white'>
-        <button
-            onClick={() => setChatState(userID, conversationID, true)}
-            className='size-full'>
-          <img
-            alt=""
-            className=''/>
-        </button>
-    </div>
+    <button
+      onClick={() => setChatState(userID, conversationID, true)}
+      className=''
+    >
+      <AvatarImage 
+        src={otherUser?.profileImg}
+        className='size-12 rounded-full' />
+    </button>
   )
 }
 

@@ -8,10 +8,14 @@ const route = express.Router();
 
 route.use(jwtTokenVerifier)
 
+// get conversations of user
 route.get("/", getAllConversations)
+
+// get conversation data by userID or conversationID
 route.get("/get", getConversation)
 
 route.patch("/seen/:conversationID", markAsSeen)
+// route.put("/")
 
 route.delete("/", deleteAllConversation)
 

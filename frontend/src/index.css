@@ -23,3 +23,19 @@ body{
     flex: 1;
     outline: none;
 }
+
+.chatbox ::-webkit-scrollbar {
+  /* width: 6px; */
+  width: 8px;
+}
+
+/* The background of the scrollbar */
+.chatbox ::-webkit-scrollbar-track {
+  background: #232323; /* Tailwind gray-800 */
+}
+
+/* The actual draggable bar */
+.chatbox ::-webkit-scrollbar-thumb {
+  background: #7e7e7e; /* Tailwind gray-600 */
+  border-radius: 8px;
+}

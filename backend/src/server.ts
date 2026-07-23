@@ -10,7 +10,7 @@ import friendRoute from "./routes/friend.route.ts"
 import cloudinaryRoute from "./routes/cloudinaryServices.route.ts"
 import conversationRoute from "./routes/conversation.route.ts"
 import messageRoute from "./routes/message.route.ts"
-
+import postRoute from "./routes/post.route.ts"
 //controllers
 
 //services
@@ -36,6 +36,7 @@ app.use("/api/user", userRoute)
 app.use("/api/friend", friendRoute)
 app.use("/api/conversation", conversationRoute)
 app.use("/api/message", messageRoute)
+app.use("/api/post", postRoute)
 
 app.use("/api/cloudinary", cloudinaryRoute)
 

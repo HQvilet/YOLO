@@ -2,7 +2,7 @@ import React, { useState, type ReactNode } from 'react'
 import { Route, Link, useNavigate } from 'react-router-dom'
 import Logo from '../assets/Logo'
 import AvatarImage from '../assets/AvatarImage'
-import { useQueryAuthUser } from '../hooks/handleUser'
+import { useQueryAuthUser } from '../features/auth/handleUser'
 
 import { HiDotsHorizontal } from "react-icons/hi";
 import { FiLogOut } from "react-icons/fi";
@@ -15,7 +15,7 @@ import { IoSearch } from "react-icons/io5";
 
 
 import { useQueryClient } from '@tanstack/react-query'
-import { useAuthLogOut } from '../hooks/handleAuth'
+import { useAuthLogOut } from '../features/auth/handleAuth'
 import NavChatFlyOutMenu from '../components/navbar/NavChatFlyOutMenu'
 
 const NavBarNavigation = ({to, children}: {to: string, children: ReactNode}) => {

@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
     userID: { type: mongoose.Schema.Types.ObjectId, ref:"UserProfile", require: true},
     // role: {type: String, require: false}
     },{
-        _id: false,
+        _id: true,
         timestamps : true
     }
 )

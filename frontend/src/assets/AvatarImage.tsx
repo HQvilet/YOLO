@@ -3,11 +3,14 @@ import defaultAvatar from '../assets/default_avatar.png'
 
 const AvatarImage = ({ src, className }: {src?: string, className?: string}) => {
   return (
-    <img 
-        src={ src || defaultAvatar }
-        alt=""
-        className={className}
-    />
+    <div className={`overflow-hidden ${className}`}>
+      <img 
+          src={ src || defaultAvatar }
+          alt=""
+          className={`object-cover size-full`}
+      />      
+    </div>
+
   )
 }
 

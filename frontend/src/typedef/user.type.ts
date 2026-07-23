@@ -23,3 +23,7 @@ export interface UserImageData{
     coverImg: string | undefined,
     profileImg?: string,
 }
+
+export type UserWithStatus = UserInterface & {
+    requestStatus?: any
+}

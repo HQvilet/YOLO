@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import api from "../services/api.config"
-import type { UserLogIn, UserSignUp } from "../typedef/user.type";
+import api from "../../lib/api.config"
+import type { UserLogIn, UserSignUp } from "../../typedef/user.type";
 
 
 export const useAuthLogin = ({onSuccess}: {onSuccess?: any}) => useMutation({

@@ -2,6 +2,7 @@ import express from "express"
 
 import { jwtTokenVerifier } from "../library/middleware/jwtTokenVerify.ts";
 import { acceptFriendRequest, deleteAllRequest, getAllFriendRequests, getAllFriends, getRecommendedFriends, sendFriendRequest } from "../controller/friend.controller.ts";
+import { getAllUsers } from "../controller/user.controller.ts";
 
 const route = express.Router();
 
@@ -12,7 +13,7 @@ route.get("/:userID/all", getAllFriends)
 // get all requests
 route.get("/request", getAllFriendRequests)
 // get recommended user
-route.get("/recommend", getRecommendedFriends)
+route.get("/recommend", getAllUsers)
 // send friend request
 route.post("/request/:userID", sendFriendRequest)
 // accept friend request

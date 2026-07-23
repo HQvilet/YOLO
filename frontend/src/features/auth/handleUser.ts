@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query"
-import api from "../services/api.config"
-import type { UserInterface } from "../typedef/user.type"
+import api from "../../lib/api.config"
+import type { UserInterface } from "../../typedef/user.type"
 
 export const useQueryAuthUser = () => useQuery({
   queryKey: ["authUser"],
-  queryFn: () => 
+  queryFn: (): Promise<UserInterface> => 
     api.get("/api/auth/me")
       .then(res => {
-        if(!res.data.success)
+        if(!res.data)
           throw new Error(res.data.error, res.data.message)
         return res.data.data
       }).catch(err => {

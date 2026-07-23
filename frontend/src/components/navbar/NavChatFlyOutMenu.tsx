@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
-import { useQueryAllFriends, useQueryAllRecommendedUser } from '../../hooks/handleFriend'
-import { useQueryAuthUser } from '../../hooks/handleUser';
+import { useQueryAuthUser } from '../../features/auth/handleUser';
 
 import { HiDotsHorizontal } from "react-icons/hi";
 import { RxAvatar } from "react-icons/rx";
@@ -10,10 +9,10 @@ import { LuExpand } from "react-icons/lu";
 import { LuNotebookPen } from "react-icons/lu";
 
 import MenuConversationItem from './MenuConversationItem'
-import { useQueryAllRequests } from '../../hooks/handleFriendRequest';
 import { useQuery } from '@tanstack/react-query';
-import api from '../../services/api.config';
+import api from '../../lib/api.config';
 import type { Conversation } from '../../typedef/conversation.type';
+import { useQueryAllConversation } from '../../features/chat/handleConversation';
 
 const NavChatFlyOutMenu = () => {
   const [feedType, setFeedType] = useState<"all" | "unseen" | "conversation">('conversation')
@@ -24,16 +23,9 @@ const NavChatFlyOutMenu = () => {
   } = useQueryAuthUser();
 
   const {
-    data: conversations 
-  } = useQuery({
-    queryKey: ["conversations"],
-    queryFn: (): Promise<Conversation[]> =>
-      api.get("/api/conversation")
-        .then(res => {
-          return res.data.data
-        }),
-  })
-
+    data: conversations
+  } = useQueryAllConversation()
+  
   return (
     <div className='absolute top-[calc(100%+0.2rem)] right-0'>
       <div className='flex flex-col bg-zinc-800 text-white rounded-lg gap-1'>

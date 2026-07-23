@@ -8,11 +8,12 @@ import ChatPage from './layout/ChatPage.tsx'
 import NavBar from './layout/NavBar'
 import ProfilePage from './pages/ProfilePage.tsx'
 
-import { useQueryAuthUser } from './hooks/handleUser.ts'
+import { useQueryAuthUser } from './features/auth/handleUser.ts'
 import FriendRequestPage from './pages/FriendRequestPage.tsx'
 import SearchPage from './pages/SearchPage.tsx'
-import { useSocketStore } from './hooks/store/socketStore.ts'
+import { useSocketStore } from './features/socketStore.ts'
 import { useCookies } from 'react-cookie'
+import ChatCallVideoStreaming from './components/chat/ChatCallVideoStreaming.tsx'
 
 function App() {
   const {
@@ -35,7 +36,6 @@ function App() {
   return (
     <>
       {authUser && <NavBar />}
-      
       <Routes>
         {authUser ? (
           <>
@@ -46,6 +46,7 @@ function App() {
             <Route path="/search" element={<SearchPage />}/>
             <Route path="/login" element={<Navigate to="/home" />} />
             <Route path="/signup" element={<Navigate to="/home" />} />
+            {/* <Route path="/video-call" element={<ChatCallVideoStreaming/>} /> */}
           </>
         ) : (
           <>

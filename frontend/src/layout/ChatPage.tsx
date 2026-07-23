@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useQueryAuthUser } from '../hooks/handleUser'
+import { useQueryAuthUser } from '../features/auth/handleUser'
 
 import ChatBox from '../components/chat/ChatBox'
 import NavChatAvatar from '../components/chat/NavChatAvatar'
-import { useChatListStore } from '../hooks/store/chatFriendStore'
+import { useChatListStore } from '../features/chat/chatFriendStore'
 
 interface ChatPreview{
   user: string,
