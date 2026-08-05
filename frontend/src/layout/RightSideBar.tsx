@@ -1,5 +1,4 @@
 import React from 'react'
-import SideBarButton from '../components/SideBarButton'
 
 const RightSideBar = () => {
   return (
@@ -24,7 +23,7 @@ const RightSideBar = () => {
                 </div>
             </div>
             <div className='flex flex-col mr-1'>
-                <SideBarButton>
+                {/* <SideBarButton>
                     LOL
                 </SideBarButton>
                 <SideBarButton>
@@ -32,7 +31,7 @@ const RightSideBar = () => {
                 </SideBarButton>
                 <SideBarButton>
                     LOL
-                </SideBarButton>
+                </SideBarButton> */}
             </div>
         </div>
     </div>

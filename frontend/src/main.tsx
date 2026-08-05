@@ -9,7 +9,7 @@ import { CookiesProvider } from 'react-cookie'
 import queryClient from './lib/queryClient.ts'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+//  <StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <CookiesProvider>
@@ -18,5 +18,5 @@ createRoot(document.getElementById('root')!).render(
         <ReactQueryDevtools />
       </QueryClientProvider>
     </BrowserRouter>
-  </StrictMode>,
+//  </StrictMode>,
 )

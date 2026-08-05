@@ -2,7 +2,7 @@ import React, { useState, type ReactNode } from 'react'
 import { Route, Link, useNavigate } from 'react-router-dom'
 import Logo from '../assets/Logo'
 import AvatarImage from '../assets/AvatarImage'
-import { useQueryAuthUser } from '../features/auth/handleUser'
+import { useQueryAuthUser } from '../features/auth/hooks/useAuthUser'
 
 import { HiDotsHorizontal } from "react-icons/hi";
 import { FiLogOut } from "react-icons/fi";
@@ -15,8 +15,8 @@ import { IoSearch } from "react-icons/io5";
 
 
 import { useQueryClient } from '@tanstack/react-query'
-import { useAuthLogOut } from '../features/auth/handleAuth'
-import NavChatFlyOutMenu from '../components/navbar/NavChatFlyOutMenu'
+import { useAuthLogOut } from '../features/auth/hooks/useAuthMutation'
+import NavChatFlyOutMenu from '../features/chat/NavChatFlyOutMenu'
 
 const NavBarNavigation = ({to, children}: {to: string, children: ReactNode}) => {
   return(
@@ -98,8 +98,8 @@ const NavBar = () => {
             
           </div>
           <div className='size-11 bg-white rounded-full overflow-hidden' >
-            <Link to={`/profile/${authUser._id}`}>
-              <AvatarImage src={authUser.profileImg}/>
+            <Link to={`/profile/${authUser?._id}`}>
+              <AvatarImage src={authUser?.profileImg}/>
             </Link>
           </div>
           <div className='size-11'>

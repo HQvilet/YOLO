@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
-import LoginPage from './pages/auth/LoginPage.tsx'
-import SignUpPage from './pages/auth/SignUpPage.tsx'
-import HomePage from './pages/HomePage.tsx'
-import ChatPage from './layout/ChatPage.tsx'
+import LoginPage from './features/auth/pages/LoginPage.tsx'
+import SignUpPage from './features/auth/pages/SignUpPage.tsx'
+import HomePage from './layout/HomePage.tsx'
+import ChatPage from './features/chat/ChatPage.tsx'
 import NavBar from './layout/NavBar'
-import ProfilePage from './pages/ProfilePage.tsx'
+import ProfilePage from './features/profile/pages/ProfilePage.tsx'
 
-import { useQueryAuthUser } from './features/auth/handleUser.ts'
-import FriendRequestPage from './pages/FriendRequestPage.tsx'
-import SearchPage from './pages/SearchPage.tsx'
-import { useSocketStore } from './features/socketStore.ts'
+import { useQueryAuthUser } from './features/auth/hooks/useAuthUser.ts'
+import FriendRequestPage from './features/friends/pages/FriendRequestPage.tsx'
+import SearchPage from './features/search/pages/SearchPage.tsx'
+import { useSocketStore } from './features/chat/store/chatSocketStore.ts'
 import { useCookies } from 'react-cookie'
-import ChatCallVideoStreaming from './components/chat/ChatCallVideoStreaming.tsx'
+import ChatCallVideoStreaming from './features/chat/components/VideoCallScreen.tsx'
 
 function App() {
   const {
@@ -21,13 +21,13 @@ function App() {
     isLoading,
     error
   } = useQueryAuthUser()
-  const { connectSocket, disConnectSocket } = useSocketStore();
+  const { connectSocket, disconnectSocket } = useSocketStore();
 
   useEffect(() => {
     connectSocket()
 
-    return () => disConnectSocket()
-  }, [authUser, connectSocket, disConnectSocket])
+    return () => disconnectSocket()
+  }, [connectSocket, disconnectSocket])
 
   if (isLoading) return null // or a loading spinner
   // if (error) return <div>Error loading user</div>
