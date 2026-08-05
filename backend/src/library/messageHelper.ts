@@ -14,7 +14,6 @@ export const updateConversation = (conversation: any, message: any) => {
         const prevCount = conversation.unreadCounts.get(memberID) || 0;
         conversation.unreadCounts.set(memberID, isSender ? 0 : prevCount + 1);
     });
-    
 }
 
 export const emitNewMessage = (io: any, conversation: any, message: any) => {
@@ -32,5 +31,4 @@ export const emitNewMessage = (io: any, conversation: any, message: any) => {
 export const addUserToConversation = (io: any, userID: string, conversationID: string) => {
     const s = io.sockets.sockets.get(onlineUsers.get(userID))
     s?.join(conversationID)
-
 }
