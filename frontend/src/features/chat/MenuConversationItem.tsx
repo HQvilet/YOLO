@@ -11,11 +11,11 @@ const MenuConversationItem = ({conversation}: {conversation: Conversation}) => {
   const isSeen: boolean = false;
   const isOnline: boolean = true;
 
-  const addConversation = useChatListStore(state => state.addConversationToChatList)
+  const addConversation = useChatListStore(state => state.addChatByConversation)
 
   const {data: authUser} = useQueryAuthUser()
   const p_user: UserInterface | undefined = conversation.participants.find(p => p.userID._id !== authUser?._id)?.userID
-  const lastMessageSender = conversation.participants.find(p => p.userID._id === conversation.lastMessage.senderID)?.userID
+  const lastMessageSender = conversation.lastMessage ? conversation.participants.find(p => p.userID._id === conversation.lastMessage.senderID)?.userID : undefined
   return (
     <div 
       className='flex w-full justify-between p-2 bg-zinc-800 rounded-xl hover:bg-white/10 pr-2 cursor-pointer'
@@ -32,9 +32,13 @@ const MenuConversationItem = ({conversation}: {conversation: Conversation}) => {
         </div>
         <div className='flex-1 text-left min-w-0'>
           <div className='flex flex-col overflow-hidden'>
-            <span className='text-lg font-semibold'>{`${conversation.group ?? p_user?.username ?? "UserName"}`}</span>
+            <span className='text-lg font-semibold'>{`${conversation.group?.name ?? p_user?.username ?? "UserName"}`}</span>
             <div className='overflow-hidden'>
-              <span className={'text-sm text-gray-500 w-[85%] truncate block ' + (isSeen && "text-white")}>{`${lastMessageSender?._id === authUser?._id ? "You" : lastMessageSender?.username}: ${conversation.lastMessage.content.text}`}</span>
+              { conversation.lastMessage && (
+                <span className={'text-sm text-gray-500 w-[85%] truncate block ' + (isSeen && "text-white")}>
+                  {`${lastMessageSender?._id === authUser?._id ? "You" : lastMessageSender?.username}: ${conversation.lastMessage.content.text}`}
+                </span>
+              )}
             </div>
           </div>
         </div>

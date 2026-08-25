@@ -1,9 +1,9 @@
 import type { Socket } from "socket.io-client";
 
 export default function createPeerConnection({userId: targetUserId, socket}: {userId: string, socket: Socket}) {
-const pc = new RTCPeerConnection({
-    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-  });
+  const pc = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+    });
 
 //   // 1. Thêm các track local (cam/mic) vào kết nối
 //   localStream.getTracks().forEach((track) => {

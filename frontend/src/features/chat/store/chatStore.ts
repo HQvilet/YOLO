@@ -12,8 +12,8 @@ type ChatPreview = {
 
 type ChatStore = {
     chatList: ChatPreview[]
-    addUserToChatList: (userID: string) => void
-    addConversationToChatList: (conversationID: string) => void
+    addChatByUser: (userID: string) => void
+    addChatByConversation: (conversationID: string) => void
 
     setChatState: (userID?: string, conversationID?: string, value?: boolean) => void
 
@@ -22,29 +22,29 @@ type ChatStore = {
 
 export const useChatListStore = create<ChatStore>((set, get) => ({
     chatList: [],
-    addUserToChatList: async (userID: string) => {
-        const res = await api.get("/api/conversation/get",{
-            params: {
-                participantID: userID
-            }
-        }).then(res => {
-            get().addConversationToChatList(res.data.data._id)
-        }).catch(() => {
-            set(state => {
-                if(state.chatList.find(chat => chat.userID === userID)){
-                    get().setChatState(userID, undefined, true)
-                    return ({...state.chatList})
+    addChatByUser: async (userID: string) => {
+        await api.get("/conversation/" + userID + "/user")
+            .then(res => {
+                if(res.data.data){
+                    get().addChatByConversation(res.data.data._id)
                 }
-                return ({
-                    chatList: [...state.chatList,{
-                        userID,
-                        isOpen: true,
-                    }]
+            })
+            .catch((error) => {
+                set(state => {
+                    if(state.chatList.find(chat => chat.userID === userID)){
+                        get().setChatState(userID, undefined, true)
+                        return ({...state.chatList})
+                    }
+                    return ({
+                        chatList: [...state.chatList,{
+                            userID,
+                            isOpen: true,
+                        }]
+                    })
                 })
             })
-        })
     },
-    addConversationToChatList: (conversationID: string) => set(state => {
+    addChatByConversation: (conversationID: string) => set(state => {
         if(state.chatList.find(chat => chat.conversationID === conversationID)){
             get().setChatState(undefined, conversationID, true)
             return ({...state.chatList})

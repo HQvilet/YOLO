@@ -4,6 +4,9 @@ import Conversation from "../model/conversation.model.ts";
 import { Types } from "mongoose"
 import UserProfile from "../model/user.profile.model.ts";
 import Message from "../model/message.model.ts";
+import { io } from "../socket/socket.ts";
+import { addUsersToConversation } from "../socket/socketHelper.ts";
+import { emitNewConversationEvent } from "../socket/events/conversationEvents.ts";
 
 export const getAllConversations = async (req: Request, res: Response) => {
     try{
@@ -31,13 +34,12 @@ export const getAllConversations = async (req: Request, res: Response) => {
     }
 }
 
-export const getConversation = async (req: Request, res: Response) => {
+export const getConversationById = async (req: Request, res: Response) => {
     try{
-        const { participantID, conversationID } = req.query
+        const { conversationID } = req.params
         const userID = req.user._id
 
         let conversation;
-
         if(conversationID){
             conversation = await Conversation.findOne({
                 _id: conversationID,
@@ -45,18 +47,9 @@ export const getConversation = async (req: Request, res: Response) => {
             }).populate({
                 path: "participants.userID",
             })
-        }
-        else if(participantID){
-            conversation = await Conversation.findOne({
-                "participants.userID": {
-                    $all: [userID, participantID]
-                },
-                type: "direct",
-            }).populate({
-                path: "participants.userID",
-            })
-        }
-        else{
+            .populate("lastMessage")
+            
+        } else {
             return res.status(400).json(serverResponseMessage({
                 success: false,
                 message: "Bad request.",
@@ -82,14 +75,72 @@ export const getConversation = async (req: Request, res: Response) => {
     }
 }
 
-export const createConversation = async (req: Request, res: Response) => {
+export const getConversationByParticipantID = async (req: Request, res: Response) => {
     try{
-        const { participantID,  } = req.body
+        const { participantID } = req.params
         const userID = req.user._id
 
-        const conversation = await Conversation.find({
-            "participants.userID": participantID,
+        let conversation;
+        if(participantID){
+            conversation = await Conversation.findOne({
+                "participants.userID": {
+                    $all: [userID, participantID]
+                },
+                type: "direct",
+            }).populate({
+                path: "participants.userID",
+            })
+        } else{
+            return res.status(400).json(serverResponseMessage({
+                success: false,
+                message: "Bad request.",
+            }))
+        }
+
+        
+        if(!conversation){
+            return res.status(404).json(serverResponseMessage({
+                success: false,
+                message: "No Resource Found",
+            }))
+        }
+        return res.status(200).json(serverResponseMessage({
+            success: true,
+            message: "Created conversation",
+            data: conversation
+        }))
+    }catch(error: any){
+        console.log(error.stack)
+        return res.status(500).json(serverErrorMessage(error.message))
+    }
+}
+
+export const createConversation = async (req: Request, res: Response) => {
+    try{
+        const { userIDs } = req.body
+        const userID = req.user._id
+
+        userIDs.push(userID.toString())
+
+        const conversation = await Conversation.create({
+            participants: userIDs.map((id: string) => ({
+                userID: new Types.ObjectId(id),
+                joinedAt: new Date(),
+                invitedBy: userID
+            })),
+            type: "group",
+            group: {
+                name: "New Group",
+                createBy: userID,
+            }
         })
+
+        await conversation.populate({
+            path: "participants.userID",
+        })
+
+        addUsersToConversation(io, conversation.participants.map(p => p.userID?.toString()!), conversation.id)
+        emitNewConversationEvent(conversation)
 
         return res.status(200).json(serverResponseMessage({
             success: true,
@@ -148,6 +199,83 @@ export const markAsSeen = async (req: Request, res: Response) => {
     console.error("Lỗi khi mark as seen", error);
     return res.status(500).json({ message: "Lỗi hệ thống" });
   }
+}
+
+export const inviteUsersToConversation = async (req: Request, res: Response) => {
+    try{
+        const { conversationID } = req.params
+        const { toInviteIDs } = req.body
+        const userID = req.user._id
+
+        const conversation = await Conversation.findOne({
+            _id: conversationID,
+            "participants.userID": userID,
+            "type": "group",
+        })
+
+        if(!conversation){
+            return res.status(404).json(serverResponseMessage({
+                success: false,
+                message: "No Resource Found",
+            }))
+        }
+
+        if(conversation.participants.some((participant) => toInviteIDs.includes(participant.userID?.toString()))){
+            return res.status(400).json(serverResponseMessage({
+                success: false,
+                message: "Some users are already in the conversation.",
+            }))
+        }
+
+        const newParticipants = toInviteIDs.map((id: string) => ({
+            userID: new Types.ObjectId(id),
+            joinedAt: new Date(),
+            invitedBy: userID
+        }))
+
+        conversation.participants.push(...newParticipants)
+        
+        await conversation.save()
+
+        return res.status(200).json(serverResponseMessage({
+            success: true,
+            message: "Invited users to conversation",
+            data: conversation
+        }))
+
+    }catch(error: any){
+        console.log(error.stack)
+        return res.status(500).json(serverErrorMessage(error.message))
+    }
+}
+
+export const leaveConversation = async (req: Request, res: Response) => {
+    try{
+        const { conversationID } = req.params
+        const userID = req.user._id
+
+        const conversation = await Conversation.findOneAndUpdate({
+            _id: conversationID,
+            "participants.userID": userID,
+        }, {
+            $set: {
+                "participants.status": "left",
+            }
+        })
+
+        if(!conversation){
+            return res.status(404).json(serverResponseMessage({
+                success: false,
+                message: "No Resource Found",
+            }))
+        }
+
+        await conversation.save()
+
+    }catch(error: any){
+        console.log(error.stack)
+        return res.status(500).json(serverErrorMessage(error.message))
+    }
 }
 
 export const getUserConversationsForSocket = async (userID: string) => {

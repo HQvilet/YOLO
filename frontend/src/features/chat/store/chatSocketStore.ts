@@ -2,8 +2,11 @@ import {create} from "zustand"
 import { connect, io, type Socket } from "socket.io-client"
 import { useQueryClient } from "@tanstack/react-query";
 import { data } from "react-router-dom";
-import { updateConversation } from "../hooks/useConversationHooks";
 import { addMessageToConversation } from "../hooks/useMessageHooks";
+import api from "../../../lib/api.config";
+import type { Conversation } from "../../../shared/types/conversation.types";
+import queryClient from "../../../lib/queryClient";
+import { manageConversationSocket, updateConversationWithMessage } from "../service/conversation.service";
 
 const baseURL = import.meta.env.VITE_SOCKET_URL
 
@@ -47,14 +50,23 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
         })
 
         socket.on("new-message", ({message, conversation, unreadCounts}) => {
-            console.log(message)
+            console.log(message, conversation);
             addMessageToConversation(conversation._id.toString(), message)
-            updateConversation(conversation._id, message)
+            
+            const conversations = queryClient.getQueryData(["conversations"]) as Conversation[] | null
+            
+            if(conversations?.find(c => c._id === conversation._id) ?? false){
+                updateConversationWithMessage(conversation._id, message)
+            } 
+            // else {
+            //     api.get(`/api/conversation/${conversation._id}`)
+            //         .then(res => { 
+            //             updateConversation(res.data.data as Conversation) 
+            //         })
+            // }
         })
 
-        socket.on("new-conversation", (conversation) => {
-            
-        })
+        manageConversationSocket(socket)
 
 
     },

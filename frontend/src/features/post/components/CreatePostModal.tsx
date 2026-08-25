@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
-import { FaImages } from "react-icons/fa";
+import React, { useEffect, useLayoutEffect, useState } from 'react'
+import { FaImages, FaVideo } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import { asyncReadFileData, useUploadImage } from '../../../shared/hooks/handleUploadImage';
 import type { PostContent } from '../../../shared/types/post.types';
 import { useQueryAuthUser } from '../../auth/hooks/useAuthUser';
 import { useUploadPost } from '../hooks/usePostHooks';
+import { Gift  } from 'lucide-react';
 
 const CreatePostModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   const [postTextContent, setPostTextContent] = useState("");
@@ -20,18 +21,34 @@ const CreatePostModal = ({ open, onClose }: { open: boolean; onClose: () => void
     setImageContent(data.map(imgFile => imgFile.content))
   }
 
+  const clearPostContent = () => {
+    setPostTextContent("")
+    setImageContent([])
+  }
+
   const {
     mutate: createPost
-  } = useUploadPost()
+  } = useUploadPost({
+    onSuccess: () => {
+      clearPostContent()
+      onClose()
+    }
+  })
 
   const {
     mutate: uploadImage
   } = useUploadImage({
     onSuccess: (data: any[]) => {
-      setImageContent(data.map(img => img.data.secure_url))
+      const imgUrls = data
+        .filter(( uploadResult ) => uploadResult.status === "fulfilled")
+        .map(uploadResult => {
+          return uploadResult.value.data.secure_url
+      })
+      setImageContent(imgUrls)
+      
       createPost({
         textContent: postTextContent,
-        imgContent: imageContent[0],
+        imgContent: imgUrls.length > 0 ? imgUrls[0] : undefined
       })
     }
   })
@@ -39,6 +56,13 @@ const CreatePostModal = ({ open, onClose }: { open: boolean; onClose: () => void
   const handleUploadPost = async () => {
     uploadImage([imageContent[0]])
   }
+
+  useEffect(() => {
+    
+    return () => {
+      clearPostContent()
+    };
+  }, [open]);
 
   if (!open) return null;
 
@@ -123,10 +147,9 @@ const CreatePostModal = ({ open, onClose }: { open: boolean; onClose: () => void
             <span className="text-primary-foreground font-bold text-sm">Aa</span>
           </div>
           <button className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-secondary transition-colors">
-            <FaImages className="w-6 h-6 text-muted-foreground" />
+            <Gift className="w-6 h-6 text-muted-foreground" />
           </button>
         </div>
-
         {/* Add to post bar */}
         <div className="mx-4 mb-3 border border-border rounded-lg flex items-center justify-between px-4 py-3">
           <span className="text-sm font-medium text-foreground">Thêm vào bài viết của bạn</span>
@@ -135,19 +158,10 @@ const CreatePostModal = ({ open, onClose }: { open: boolean; onClose: () => void
               <FaImages className="w-6 h-6 text-[hsl(var(--fb-green))]" />
             </button>
             <button className="hover:bg-secondary p-1.5 rounded-full transition-colors">
-              <FaImages className="w-6 h-6 text-[hsl(var(--primary))]" />
-            </button>
-            <button className="hover:bg-secondary p-1.5 rounded-full transition-colors">
-              <FaImages className="w-6 h-6 text-[hsl(var(--fb-yellow))]" />
-            </button>
-            <button className="hover:bg-secondary p-1.5 rounded-full transition-colors">
-              <FaImages className="w-6 h-6 text-[hsl(var(--fb-red))]" />
+              <FaVideo className="w-6 h-6 text-[hsl(var(--primary))]" />
             </button>
             <button className="hover:bg-secondary p-1.5 rounded-full transition-colors">
               <span className="font-bold text-xs text-[hsl(var(--fb-green))]">GIF</span>
-            </button>
-            <button className="hover:bg-secondary p-1.5 rounded-full transition-colors">
-              <FaImages className="w-6 h-6 text-muted-foreground" />
             </button>
           </div>
         </div>

@@ -13,8 +13,8 @@ export const asyncReadFileData = (file: File) =>
 export const useUploadImage = (
     options?: UseMutationOptions<any, Error, any>
 ) => useMutation({
-    mutationFn: (imgRawData: string[]) =>
-      api.get("/api/cloudinary/sign-delivery")
+    mutationFn: (imgRawData: (string | File)[]) =>
+      api.get("/cloudinary/sign-delivery")
         .then(res => {
             console.log("Get signed url.")
             const signatureResult = res.data
@@ -23,7 +23,11 @@ export const useUploadImage = (
                 throw new Error("Fail to sign secret url.")
             }
             
-            return Promise.all(imgRawData.map(img => {
+            return Promise.allSettled(imgRawData
+                .map(img => {
+                if(img === undefined || img === null){
+                    return Promise.reject(new Error("Invalid image data."))
+                }
                 const data = new FormData();
                 
                 data.append("file", img)

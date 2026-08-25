@@ -5,7 +5,8 @@ import type { UserInterface } from './user.types'
 export interface Conversation {
     _id: string
     group?: {
-        name: string
+        name?: string
+        avatar?: string
         createdBy: string
     }
     conversationID?: string
@@ -13,6 +14,8 @@ export interface Conversation {
         userID: UserInterface
         joinedAt: Date
         nickName?: string
+        status: "joined" | "left"
+        invitedBy: string
     }[]
     lastMessageAt: Date
     lastMessage: Message

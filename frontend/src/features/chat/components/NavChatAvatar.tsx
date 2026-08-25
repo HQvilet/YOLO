@@ -19,7 +19,7 @@ const NavChatAvatar = ({userID, conversationID}: {userID?: string, conversationI
     isError
   } = useQueryConversation({
     conversationID,
-    recipientID: userID,
+    // recipientID: userID,
   })
   
 

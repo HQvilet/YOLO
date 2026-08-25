@@ -9,6 +9,7 @@ const __dirname = path.resolve();
 export default defineConfig({
   plugins: [react()],
   server:{
+    host: true,
     port:5001,
     proxy:{
       "/api":{

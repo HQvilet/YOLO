@@ -1,3 +1,4 @@
+import type { RequestInterface } from "./request.types"
 
 export interface UserLogIn {
     email: string
@@ -26,4 +27,10 @@ export interface UserImageData {
 
 export type UserWithStatus = UserInterface & {
     requestStatus?: any
+}
+
+export type UserProfileWithDetail = UserInterface & {
+    requestStatus?: any
+    friendCount: number
+    mutualFriends: UserInterface[]
 }

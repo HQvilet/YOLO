@@ -5,7 +5,7 @@ import type { UserInterface } from "../../../shared/types/user.types"
 export const useQueryAuthUser = () => useQuery({
   queryKey: ["authUser"],
   queryFn: (): Promise<UserInterface> => 
-    api.get("/api/auth/me")
+    api.get("/auth/me")
       .then(res => {
         if(!res.data)
           throw new Error(res.data.error, res.data.message)
@@ -19,13 +19,13 @@ export const useQueryAuthUser = () => useQuery({
 export const useQueryUser = (userID: string) => useQuery({
   queryKey: ["user", userID],
   queryFn: async (): Promise<UserInterface> =>
-    api.get(`/api/user/profile/${userID}`)
+    api.get(`/user/profile/${userID}`)
       .then(res => res.data.data)
 })
 
 export const useQueryAllUsers = () => useQuery({
   queryKey: ["users"],
   queryFn: (): Promise<UserInterface[]> => 
-    api.get(`/api/user`)
+    api.get(`/user`)
       .then(res => res.data.data)
 })

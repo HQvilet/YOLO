@@ -1,5 +1,5 @@
 import React, { useState, type ReactNode } from 'react'
-import { Route, Link, useNavigate } from 'react-router-dom'
+import { Route, Link, useNavigate, createSearchParams } from 'react-router-dom'
 import Logo from '../assets/Logo'
 import AvatarImage from '../assets/AvatarImage'
 import { useQueryAuthUser } from '../features/auth/hooks/useAuthUser'
@@ -34,7 +34,7 @@ const NavBar = () => {
   const navigate = useNavigate();
 
   const [isOpenDropDown, openDropDown] = useState<boolean>(false)
-  const [search, setSearch] = useState<string>();
+  const [search, setSearch] = useState<string>("");
   
   const {
     data: authUser,
@@ -49,6 +49,16 @@ const NavBar = () => {
     }
   })
 
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const text = search.trim()
+    if(text === "") return
+    navigate({
+      pathname: `/search`,
+      search: `?${createSearchParams({q: text})}`
+    })
+  }
+
   return (
     <nav className='flex justify-stretch gap-5 border-b-4 border-violet-500 bg-zinc-800 w-[100vw] fixed top-0 right-0 z-10'>
         <div className='flex basis-1/3 items-center'>
@@ -59,13 +69,14 @@ const NavBar = () => {
             <IoSearch />
             <form action=""
               className='input_box'
-              onSubmit={(e) => {
-                e.preventDefault()
-                navigate("/search")}}>
+              onSubmit={handleSearch}>
               <input
                 type="text"
                 placeholder="Search here"
-                className='bg-transparent' />
+                className='bg-transparent'
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </form>
             
           </div>
@@ -97,9 +108,9 @@ const NavBar = () => {
             </button>
             
           </div>
-          <div className='size-11 bg-white rounded-full overflow-hidden' >
-            <Link to={`/profile/${authUser?._id}`}>
-              <AvatarImage src={authUser?.profileImg}/>
+          <div className=' bg-white rounded-full overflow-hidden' >
+            <Link to={`/profile/${authUser?._id}`} className='size-11'>
+              <AvatarImage src={authUser?.profileImg} className='size-11'/>
             </Link>
           </div>
           <div className='size-11'>

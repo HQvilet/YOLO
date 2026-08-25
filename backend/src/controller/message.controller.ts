@@ -5,8 +5,11 @@ import { Types } from "mongoose"
 import Conversation from "../model/conversation.model.ts";
 import Message from "../model/message.model.ts";
 import { create } from "node:domain";
-import { addUserToConversation, emitNewMessage, updateConversation } from "../library/messageHelper.ts";
+import { updateConversation } from "../library/messageHelper.ts";
 import { io } from "../socket/socket.ts";
+import { emitNewMessageEvent } from "../socket/events/chatEvents.ts";
+import { addUsersToConversation } from "../socket/socketHelper.ts";
+import { emitNewConversationEvent } from "../socket/events/conversationEvents.ts";
 
 export const sendMessage = async (req: Request, res: Response) => {
     try{
@@ -58,7 +61,7 @@ export const sendMessage = async (req: Request, res: Response) => {
         await conversation.save()
 
         // io emit message
-        emitNewMessage(io, conversation, message)
+        emitNewMessageEvent(message, conversation)
 
         return res.status(200).json(serverResponseMessage({
             success: true,
@@ -74,10 +77,10 @@ export const sendMessage = async (req: Request, res: Response) => {
 
 export const sendDirectMessage = async (req: Request, res: Response) => {
     try{
-        const { recipientID, conversationID, content } = req.body;
+        const { recipientID, content } = req.body;
         const senderID = req.user._id.toString()
         
-        if(!content || (!content.text && !content.imgURL)){
+        if(!content || (!content.text && !content.imgURL) || !recipientID){
             return res.status(400).json(serverResponseMessage({
                 success: false,
                 error: "Missing content.",
@@ -85,19 +88,10 @@ export const sendDirectMessage = async (req: Request, res: Response) => {
         }
 
         let conversation;
-        
-        if(conversationID)
-            conversation = await Conversation.findOne({
-                _id: conversationID,
-                "participants.userID": {$all: [senderID]},
-                type: "direct"
-            })
-        else{
-            conversation = await Conversation.findOne({
-                "participants.userID": {$all: [senderID, recipientID]},
-                type: "direct"
-            })
-        }
+        conversation = await Conversation.findOne({
+            "participants.userID": {$all: [senderID, recipientID]},
+            type: "direct"
+        })
         
         if(!conversation){
             conversation = await Conversation.create({
@@ -107,9 +101,12 @@ export const sendDirectMessage = async (req: Request, res: Response) => {
                 ],
                 type: "direct"
             })
-            // add 2 socket to conversation room
-            addUserToConversation(io, senderID, conversation._id.toString())
-            addUserToConversation(io, recipientID, conversation._id.toString())
+            await conversation.populate({
+                path: "participants.userID",
+            })
+
+            addUsersToConversation(io, [senderID, recipientID], conversation.id)
+            emitNewConversationEvent(conversation)
         }
         
         const message = await Message.create({
@@ -123,7 +120,7 @@ export const sendDirectMessage = async (req: Request, res: Response) => {
         await conversation.save()
 
         // io emit message
-        emitNewMessage(io, conversation, message)
+        emitNewMessageEvent(message, conversation)
 
         return res.status(200).json(serverResponseMessage({
             success: true,
@@ -142,26 +139,16 @@ export const sendGroupMessage = async (req: Request, res: Response) => {
         const { conversationID, content } = req.body;
         const senderID = req.user._id.toString()
         
-        if(!content || (!content.text && !content.imgURL)){
+        if(!content || (!content.text && !content.imgURL) || !conversationID){
             return res.status(400).json(serverResponseMessage({
                 success: false,
                 error: "Missing content.",
             }))
         }
-
-        if(!conversationID){
-            return res.status(400).json(serverResponseMessage({
-                success: false,
-                error: "Bad Request.",
-            })) 
-        }
-
-        // let conversation;
         
         const conversation = await Conversation.findOne({
             _id: conversationID,
-            "participants.userID": senderID,
-            type: "group"
+            "participants.userID": senderID
         })
         
         if(!conversation){
@@ -182,7 +169,7 @@ export const sendGroupMessage = async (req: Request, res: Response) => {
         await conversation.save()
 
         // io emit message
-        emitNewMessage(io, conversation, message)
+        emitNewMessageEvent(message, conversation)
 
         return res.status(200).json(serverResponseMessage({
             success: true,

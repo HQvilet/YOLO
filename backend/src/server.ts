@@ -11,6 +11,7 @@ import cloudinaryRoute from "./routes/cloudinaryServices.route.ts"
 import conversationRoute from "./routes/conversation.route.ts"
 import messageRoute from "./routes/message.route.ts"
 import postRoute from "./routes/post.route.ts"
+import { setupSwagger } from "./config/swagger.ts";
 //controllers
 
 //services
@@ -23,12 +24,14 @@ import { app, server } from "./socket/socket.ts"
 const PORT = parseInt(process.env.PORT || "5000");
 
 app.use(cors({
-    origin: true,
+    origin: ["http://localhost:5001", "http://192.168.1.52:5001"],
     credentials: true,
 }));
 app.use(express.json());
 app.use(urlencoded({extended:true}));
 app.use(cookieParser());
+
+setupSwagger(app);
 
 app.use("/api/auth", authRoute)
 app.use("/api/user", userRoute)

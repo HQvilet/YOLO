@@ -3,13 +3,16 @@ import mongoose from "mongoose"
 const participantSchema = new mongoose.Schema({
     userID: {type: mongoose.Schema.Types.ObjectId, ref:"UserProfile", require:true},
     joinedAt: {type: Date, require: true, default: new Date()},
-    nickName: {type: String}
+    nickName: {type: String},
+    status: {type: String, enum: ["joined", "left"], default: "joined"},
+    invitedBy: {type: mongoose.Schema.Types.ObjectId, ref:"UserProfile"},
 },{
     _id: false,
 })
 
 const groupProfileSchema = new mongoose.Schema({
     name: {type: String},
+    avatar: {type: String},
     createBy: {type: mongoose.Schema.Types.ObjectId, ref:"UserProfile", require:true},
 },{
     _id: false,
@@ -27,7 +30,7 @@ const conversationSchema = new mongoose.Schema({
     },
     lastMessageAt:{
         type: Date,
-        require: true
+        require: false,
     },
     type: {
         type: String,

@@ -27,6 +27,9 @@ import type { UserInterface } from '../../../shared/types/user.types';
 import { useQueryAuthUser } from '../../auth/hooks/useAuthUser';
 
 // ---- Types ------------------------------------------------------------
+// id - stream
+// id - state
+// id - peerconnection
 
 interface UserStreamWithState {
   participantId: string;
@@ -42,9 +45,6 @@ interface ControlButtonProps {
   offIcon: React.ReactNode;
   offColor: string;
 }
-
-// const MIN_PARTICIPANTS = 2;
-// const MAX_PARTICIPANTS = 9;
 
 // Tracks viewport width so the grid can recompute its column count live
 function useWindowWidth(): number {
@@ -95,6 +95,8 @@ function VideoCallScreen({ roomId, conversation, isMicrophoneOn = true, isCamera
   
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
 
+  // const [peerConnections, setPeerConnections] = useState<Map<string, RTCPeerConnection | null> | null | undefined>(null)
+  const peerConnections = useRef<Map<string, RTCPeerConnection | null> | null | undefined>(new Map());
   const userMapping = useMemo(() => {
     const map = new Map<string, UserInterface>();
     conversation?.participants.forEach((p) => {
@@ -126,7 +128,7 @@ function VideoCallScreen({ roomId, conversation, isMicrophoneOn = true, isCamera
     const hasVideo = transceivers.some(
       (t) => t.sender.track?.kind === 'video' || t.receiver.track?.kind === 'video'
     );
-
+    
     if (!hasAudio) {
       console.log("No audio transceiver found, adding audio transceiver");
       const init: RTCRtpTransceiverInit = { direction: 'sendrecv' };
@@ -167,10 +169,10 @@ function VideoCallScreen({ roomId, conversation, isMicrophoneOn = true, isCamera
 
         if (existingIndex !== -1) {
           // Nếu đã tồn tại, cập nhật luồng video
-          const asd = prevMapping[existingIndex];
+          const prevStream = prevMapping[existingIndex];
           const updatedStreams = [...prevMapping];
           updatedStreams[existingIndex] = {
-            ...asd,
+            ...prevStream,
             stream: streamToUse,
           };
           return updatedStreams;
@@ -193,14 +195,21 @@ function VideoCallScreen({ roomId, conversation, isMicrophoneOn = true, isCamera
         socket?.emit('ice-candidate', {
           roomId,
           candidate: event.candidate,
+          recipientId: userId
         });
       }
     };
-
+    
+    // setPeerConnections(prev => {
+    //   const map = new Map([...(prev?.entries() ?? []), [userId, pc]])
+    //   map.set(userId, pc);
+    //   return map
+    // })
+    peerConnections.current?.set(userId, pc);
     peerConnectionRef.current = pc;
     return pc;
   };
-
+  
   useEffect(() => {
     const getLocalStream = async () => {
       try {
@@ -238,7 +247,7 @@ function VideoCallScreen({ roomId, conversation, isMicrophoneOn = true, isCamera
             return { 
               ...userStream, 
               micOn: streamState.microphone, 
-              cameraOn: streamState.camera 
+              cameraOn: streamState.camera,
             };
           }
           return userStream;
@@ -252,8 +261,20 @@ function VideoCallScreen({ roomId, conversation, isMicrophoneOn = true, isCamera
       setUserStreams(prev => prev.filter(userStream => userStream.participantId !== userId))
     });
 
-    socket?.on('existing-users', async ({ participants }) => {
+    socket?.on('existing-users', async ({ participants }: {participants: {participantId: string, microphone: boolean, camera: boolean}[]}) => {
+      console.log("Participants :", participants)
       
+      setUserStreams((prev) => {
+        return participants.map(user => {
+          return ({
+            participantId: user.participantId,
+            cameraOn: user.camera,
+            micOn: user.microphone,
+            stream: prev.find(p => p.participantId === user.participantId)?.stream ?? new MediaStream()
+          });
+        })
+      })
+      socket.removeAllListeners('existing-users')
     });
 
     socket?.on('user-change-stream-state', ({ userId, streamState }) => {
@@ -262,7 +283,7 @@ function VideoCallScreen({ roomId, conversation, isMicrophoneOn = true, isCamera
     });
 
     // --- KỊCH BẢN NGUỜI GỌI (CALLER - Người ở trong phòng trước) ---
-    socket?.on('user-joined', async ( {userId} ) => {
+    socket?.on('user-joined', async ( {userId, socketId} ) => {
       console.log('Có người tham gia phòng, bắt đầu gửi Offer...');
       const pc = createPeerConnection(userId);
 
@@ -271,7 +292,7 @@ function VideoCallScreen({ roomId, conversation, isMicrophoneOn = true, isCamera
       await pc.setLocalDescription(offer);
 
       // Gửi Offer tới đối phương qua Signaling Server
-      socket.emit('offer', { roomId, offer });
+      socket.emit('offer', { roomId, offer, recipientId: userId });
     });
 
     // --- KỊCH BẢN NGƯỜI NHẬN (CALLEE - Người vào phòng sau) ---
@@ -287,22 +308,29 @@ function VideoCallScreen({ roomId, conversation, isMicrophoneOn = true, isCamera
       await pc.setLocalDescription(answer);
 
       // Gửi Answer lại cho đối phương
-      socket.emit('answer', { answer, roomId });
+      socket.emit('answer', { answer, roomId, recipientId: senderId });
     });
 
     // Nhận Answer từ người nhận (Dành cho Caller)
-    socket?.on('answer', async ({answer}) => {
+    socket?.on('answer', async ({answer, senderId, recipientId}) => {
       console.log('Nhận được Answer, hoàn tất Handshake!');
-      const pc = peerConnectionRef.current;
-      if (pc) {
-        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      const pc = peerConnections.current?.get(senderId); 
+      // if (pc) {
+      //   await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      // }
+      if(!pc){
+        return;
       }
+
+      if (pc.signalingState === "have-local-offer") {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      } 
     });
 
     // Nhận thông tin ICE Candidate từ đối phương
-    socket?.on('ice-candidate', async ({candidate}) => {
+    socket?.on('ice-candidate', async ({candidate, senderId}) => {
       console.log('Nhận được ICE Candidate:');
-      const pc = peerConnectionRef.current;
+      const pc = peerConnections.current?.get(senderId);
       if (pc && candidate) {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
       }
@@ -315,7 +343,7 @@ function VideoCallScreen({ roomId, conversation, isMicrophoneOn = true, isCamera
     
     // clean socket beffore leaving
     socket?.removeAllListeners("user-left")
-    socket?.removeAllListeners("existing-users")
+    // socket?.removeAllListeners("existing-users")
     socket?.removeAllListeners("user-change-stream-state")
     socket?.removeAllListeners("user-joined")
     socket?.removeAllListeners("offer")
@@ -327,30 +355,25 @@ function VideoCallScreen({ roomId, conversation, isMicrophoneOn = true, isCamera
       localStreamRef.current.getTracks().forEach((track) => track.stop());
     }
   }
-
+  
   // Cleanup tracks on component unmount
   useEffect(() => {
+    const handleBeforeUnload = (event: any) => {
+      // Logic bạn muốn chạy khi người dùng refresh hoặc đóng tab
+      // event.preventDefault();
+      leaveRoom()
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     setupSocketListeners();
 
     return () => {
       console.log('Cleaning up: closing peer connection and stopping local tracks');
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       leaveRoom()
-      // peerConnectionRef.current?.close();
-      // if (localStreamRef.current) {
-      //   localStreamRef.current.getTracks().forEach((track) => track.stop());
-      // }
     };
-  }, [roomId]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log("Media stream :", localStream?.getTracks())
-      console.log("Remote Stream :", userStreams)
-    }, 5000)
-    return () => {
-      clearInterval(interval)
-    }
-  }, [])
+  }, []);
   
 
   const [micOn, setMicOn] = useState<boolean>(isMicrophoneOn);
@@ -376,7 +399,6 @@ function VideoCallScreen({ roomId, conversation, isMicrophoneOn = true, isCamera
       socket?.emit('user-change-stream-state', { roomId, streamState: { microphone: !micOn } });
     }
 
-    // setMicOn((prev) => !prev);
   };
 
   const toggleCam = async () => {

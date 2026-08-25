@@ -5,7 +5,7 @@ import type { UserLogIn, UserSignUp } from "../../../shared/types/user.types"
 
 export const useAuthLogin = ({onSuccess}: {onSuccess?: any}) => useMutation({
     mutationFn: async (authData: UserLogIn) => {
-        await api.post("/api/auth/login",
+        await api.post("/auth/login",
             authData,
         ).then(res => {
             return res.data.data
@@ -18,7 +18,7 @@ export const useAuthLogin = ({onSuccess}: {onSuccess?: any}) => useMutation({
 
 export const useAuthSignUp = ({onSuccess}: {onSuccess?: any}) => useMutation({
     mutationFn: async (authData: UserSignUp) => {
-        await api.post("/api/auth/signup",
+        await api.post("/auth/signup",
             authData,
         ).then(res => {
             console.log(res)
@@ -31,6 +31,6 @@ export const useAuthSignUp = ({onSuccess}: {onSuccess?: any}) => useMutation({
 
 export const useAuthLogOut = ({onSuccess}: {onSuccess?: any}) => useMutation({
     mutationFn: () => 
-        api.post("/api/auth/logout"),
+        api.post("/auth/logout"),
     onSuccess,
 })

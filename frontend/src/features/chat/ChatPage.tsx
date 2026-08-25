@@ -9,15 +9,9 @@ import Modal from '../../layout/Modal'
 import VideoCallScreen from './components/VideoCallScreen'
 import { type Conversation } from '../../shared/types/conversation.types'
 
-interface ChatPreview{
-  user: string,
-  isOpen: boolean,
-}
-
 
 const ChatPage = () => {
 
-  const authUser = useQueryAuthUser()
   const chatList = useChatListStore(state => state.chatList)
 
   const [callRoom, setCallRoom] = useState<Conversation | null>(null);
@@ -39,7 +33,7 @@ const ChatPage = () => {
                     <ChatBox 
                       key={chat.conversationID ?? chat.userID} 
                       userID={chat.userID} 
-                      conversationID={chat.conversationID || ""} 
+                      conversationID={chat.conversationID} 
                       onOpenVideoCallRoom={setCallRoom}/>))
               }
           </div>

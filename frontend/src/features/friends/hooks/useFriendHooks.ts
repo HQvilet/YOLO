@@ -6,15 +6,15 @@ import type { RequestInterface } from "../../../shared/types/request.types"
 
 export const useQueryAllFriends = (userID: string) => useQuery({
     queryKey: ["friends", userID],
-    queryFn: (): Promise<any[]> => 
-        api.get(`/api/friend/${userID}/all`)
+    queryFn: (): Promise<UserInterface[]> => 
+        api.get(`/friend/${userID}/all`)
             .then(res => res.data.data)
 })
 
 export const useQueryAllRecommendedUser = () => useQuery({
     queryKey: ["friend-recommend"],
     queryFn: (): Promise<UserWithStatus[]> => 
-        api.get(`/api/friend/recommend`)
+        api.get(`/friend/recommend`)
             .then(res => res.data.data),
 })
 

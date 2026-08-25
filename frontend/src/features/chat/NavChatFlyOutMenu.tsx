@@ -5,7 +5,7 @@ import { HiDotsHorizontal } from "react-icons/hi";
 import { RxAvatar } from "react-icons/rx";
 import { MdOutlineMessage } from "react-icons/md";
 import { IoSearch } from "react-icons/io5";
-import { LuExpand } from "react-icons/lu";
+import { LuExpand, LuPlus } from "react-icons/lu";
 import { LuNotebookPen } from "react-icons/lu";
 
 import MenuConversationItem from './MenuConversationItem'
@@ -13,10 +13,13 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api.config';
 import type { Conversation } from '../../shared/types/conversation.types';
 import { useQueryAllConversation } from './hooks/useConversationHooks';
+import Modal from '../../layout/Modal';
+import InviteFriendModal from './InviteFriendModal';
 
 const NavChatFlyOutMenu = () => {
   const [feedType, setFeedType] = useState<"all" | "unseen" | "conversation">('conversation')
 
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const {
       data: authUser,
       isLoading
@@ -25,6 +28,11 @@ const NavChatFlyOutMenu = () => {
   const {
     data: conversations
   } = useQueryAllConversation()
+
+
+  const openInviteModal = () => {
+    setIsInviteModalOpen(true);
+  }
   
   return (
     <div className='absolute top-[calc(100%+0.2rem)] right-0'>
@@ -41,9 +49,9 @@ const NavChatFlyOutMenu = () => {
                 <HiDotsHorizontal className='mx-auto my-auto'/>
               </button>
               <button className='size-full hover:bg-white/20 p-1 rounded-full'
-                onClick={e => {setFeedType("conversation")}}
+                onClick={e => {openInviteModal()}}
               >
-                <LuExpand className='mx-auto my-auto'/>
+                <LuPlus className='mx-auto my-auto'/>
               </button>
               <button className='size-full hover:bg-white/20 p-1 rounded-full'
                 onClick={e => {setFeedType("conversation")}}
@@ -83,6 +91,9 @@ const NavChatFlyOutMenu = () => {
           })}
         </div>}
       </div>
+      <Modal open={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)}>
+          <InviteFriendModal onClose={() => setIsInviteModalOpen(false)} />
+      </Modal>
     </div>
   )
 }

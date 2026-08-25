@@ -1,0 +1,26 @@
+[33mcommit 6c2ba48f8cac7fca23bbbeef7614939d850dbbfd[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: U1T-HoQuocViet <129581995+HQvilet@users.noreply.github.com>
+Date:   Thu Jul 23 18:06:58 2026 +0700
+
+    refactor: frontend structure
+
+[33mcommit aff7172988e514e1b90233b845f9ae9fffe51d4e[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: U1T-HoQuocViet <129581995+HQvilet@users.noreply.github.com>
+Date:   Wed Mar 25 14:47:19 2026 +0700
+
+    socket added
+
+[33mcommit 6a67b6c83dfeed8e2e52cea6562ea7c0fbf34078[m
+Author: U1T-HoQuocViet <129581995+HQvilet@users.noreply.github.com>
+Date:   Wed Mar 18 13:37:49 2026 +0700
+
+    basic frontend and backend
+    
+    frontend layout
+    backend basic api handle
+
+[33mcommit d361327ac4082646024463e72db757738f134d54[m
+Author: U1T-HoQuocViet <129581995+HQvilet@users.noreply.github.com>
+Date:   Wed Mar 18 13:31:18 2026 +0700
+
+    Initial commit

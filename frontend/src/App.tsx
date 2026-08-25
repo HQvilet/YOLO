@@ -14,6 +14,8 @@ import SearchPage from './features/search/pages/SearchPage.tsx'
 import { useSocketStore } from './features/chat/store/chatSocketStore.ts'
 import { useCookies } from 'react-cookie'
 import ChatCallVideoStreaming from './features/chat/components/VideoCallScreen.tsx'
+import PostDetail from './features/post/pages/PostDetail.tsx'
+import Modal from './layout/Modal.tsx'
 
 function App() {
   const {
@@ -24,10 +26,11 @@ function App() {
   const { connectSocket, disconnectSocket } = useSocketStore();
 
   useEffect(() => {
-    connectSocket()
+    if(authUser)
+      connectSocket()
 
     return () => disconnectSocket()
-  }, [connectSocket, disconnectSocket])
+  }, [connectSocket, disconnectSocket, authUser])
 
   if (isLoading) return null // or a loading spinner
   // if (error) return <div>Error loading user</div>
@@ -46,7 +49,11 @@ function App() {
             <Route path="/search" element={<SearchPage />}/>
             <Route path="/login" element={<Navigate to="/home" />} />
             <Route path="/signup" element={<Navigate to="/home" />} />
-            {/* <Route path="/video-call" element={<ChatCallVideoStreaming/>} /> */}
+            <Route path="/post/:postID" element={
+              <Modal>
+                <PostDetail />
+              </Modal>
+              } />
           </>
         ) : (
           <>

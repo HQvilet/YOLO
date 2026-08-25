@@ -16,6 +16,9 @@ schema.pre('save', async function(){
 
 schema.index({sender: 1, recipient: 1},{unique: true});
 
+schema.index({sender: 1, status: 1})
+schema.index({recipient: 1, status: 1})
+
 const FriendRequest = mongoose.model("FriendRequest", schema);
 
 export default FriendRequest;

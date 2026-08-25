@@ -2,9 +2,6 @@ import React, { useRef, useState, type InputHTMLAttributes, type ReactNode } fro
 
 import { IoClose, IoCall } from "react-icons/io5";
 import { FaVideo, FaMinus, FaPlusCircle } from "react-icons/fa";
-import { IoMdImages } from "react-icons/io";
-import { HiGif } from "react-icons/hi2";
-import { RiEmojiStickerFill } from "react-icons/ri";
 import { FaPen } from "react-icons/fa6";
 import type { UserInterface } from "../../../shared/types/user.types";
 import { useChatListStore } from '../store/chatStore';
@@ -17,17 +14,24 @@ import type { Message, MessageContent } from '../../../shared/types/message.type
 import { useSocketStore } from '../store/chatSocketStore';
 import { useQueryConversation } from '../hooks/useConversationHooks';
 import AvatarImage from '../../../assets/AvatarImage';
-import { useQueryAllMessage, useSendDirectMessage } from '../hooks/useMessageHooks';
+import { useQueryAllMessage, useSendDirectMessage, sendMessageToConversation, sendMessageToDirect, useSendGroupMessage } from '../hooks/useMessageHooks';
 import Modal from '../../../layout/Modal';
 import VideoCallScreen from './VideoCallScreen';
 import type { Conversation } from '../../../shared/types/conversation.types';
+import GroupSettingsPanel from './GroupSettingsPanel';
 
-const ChatBox = ({userID, conversationID, onOpenVideoCallRoom}: {userID?: string, conversationID: string, onOpenVideoCallRoom?: (room: Conversation) => void}) => {
+const ChatBox = ({userID, conversationID, onOpenVideoCallRoom}: {userID?: string, conversationID?: string, onOpenVideoCallRoom?: (room: Conversation) => void}) => {
   const queryClient = useQueryClient()
+
+  const hasConversation = conversationID !== undefined && conversationID !== null && conversationID !== ""
 
   const {setChatState, updateConversationID} = useChatListStore()
   const { joinedConversation } = useSocketStore()
   const socket = useSocketStore(state => state.socket)
+
+
+  const [isOpenGroupSettings, setIsOpenGroupSettings] = useState<boolean>(false)
+  const [isNewConversation, setIsNewConversation] = useState<boolean>(false)
 
   const [messageContent, setMessageContent] = useState<MessageContent>({
     text: "",
@@ -39,21 +43,35 @@ const ChatBox = ({userID, conversationID, onOpenVideoCallRoom}: {userID?: string
     data: conversation,
     isError
   } = useQueryConversation({
-    conversationID,
-    recipientID: userID
+    conversationID
   })
 
+  const {
+    data: messages
+  } = useQueryAllMessage(conversationID)
+
+  const {
+    mutate: sendMessage
+  } = useSendDirectMessage({
+    onSuccess: (res) => {
+      const data = res.data.data
+      if(!conversationID && userID){
+        joinedConversation(data.conversationID)
+        updateConversationID(userID, data.conversationID)
+      }
+    }
+  })
   
+  const {
+    mutate: sendGroupMessage
+  } = useSendGroupMessage()
+
   if(conversation){
     if(!conversationID && userID){
       updateConversationID(userID, conversation._id)
     }
   }
   
-  const startVideoCall = () => {
-    onOpenVideoCallRoom?.(conversation!)
-  }
-
   const useGroupDisplayInfo: any = conversation && conversation?.group
   let otherUser: UserInterface | undefined ;
 
@@ -67,21 +85,7 @@ const ChatBox = ({userID, conversationID, onOpenVideoCallRoom}: {userID?: string
   const userMap = new Map<string, UserInterface>()
   conversation?.participants.forEach(p => userMap.set(p.userID._id, p.userID))
 
-  const {
-    data: messages
-  } = useQueryAllMessage(conversationID)
 
-  const {
-    mutate: sendMessage,
-  } = useSendDirectMessage({
-    onSuccess: (res) => {
-      const data = res.data.data
-      if(!conversationID && userID){
-        joinedConversation(data.conversationID)
-        updateConversationID(userID, data.conversationID)
-      }
-    }
-  })
 
   const n_messages = messages?.map<Message>((msg, i, arr) => {
     msg.createdAt = new Date(msg.createdAt);
@@ -101,13 +105,23 @@ const ChatBox = ({userID, conversationID, onOpenVideoCallRoom}: {userID?: string
     return msg;
   })
 
+  const startVideoCall = () => {
+    onOpenVideoCallRoom?.(conversation!)
+  }
 
   const handleSendMessage = () => {
-    sendMessage({
-      recipientID: userID,
-      conversationID,
-      content: messageContent
-    })
+
+    if(!conversationID){
+      sendMessage({
+        recipientID: userID,
+        content: messageContent
+      })
+    } else{
+      sendGroupMessage({
+        conversationID: conversationID,
+        content: messageContent
+      })
+    }
 
     setMessageContent({
       text: ""
@@ -117,12 +131,15 @@ const ChatBox = ({userID, conversationID, onOpenVideoCallRoom}: {userID?: string
   return (
     <div className='chatbox flex flex-col w-[21rem] h-[28rem] bg-zinc-950 text-white rounded-t-xl'>
         {/* chat box header */}
-        <header className='flex justify-between bg-violet-500 rounded-t-xl'>
-          <div className='flex p-1 gap-2 items-center'>
+        <header className='flex justify-between bg-violet-500 rounded-t-xl relative'>
+          <div className='flex p-1 gap-2 items-center cursor-pointer'
+            onClick={() => {
+              setIsOpenGroupSettings(true)
+            }}>
             <AvatarImage 
               src={otherUser?.profileImg} 
               className='size-10 rounded-full'/>
-            <span >{useGroupDisplayInfo ? conversation?.group?.name : otherUser?.username}</span>
+            <span className='font-bold'>{useGroupDisplayInfo ? conversation?.group?.name : otherUser?.username}</span>
           </div>
           <div className='flex p-2 text-xl items-center'>
             <button className='size-8 rounded-full hover:bg-white/20'
@@ -149,6 +166,11 @@ const ChatBox = ({userID, conversationID, onOpenVideoCallRoom}: {userID?: string
               <IoClose className='mx-auto text-3xl'/>
             </button>
           </div>
+          <Modal open={isOpenGroupSettings && conversation?.type === "group"} >
+              {conversation && (
+                <GroupSettingsPanel conversation={conversation} onClose={() => setIsOpenGroupSettings(false)}/>
+              )}
+          </Modal>
         </header>
         {/* chat box content */}
         <div className='overflow-y-hidden flex-1'>
@@ -164,11 +186,11 @@ const ChatBox = ({userID, conversationID, onOpenVideoCallRoom}: {userID?: string
                 <div className={`flex text-sm ${message.isNewUserBlock || message.isNewTimeStampBlock ? "pb-2" : ""}`}>
                   {!isMe ?
                     (<div className='flex gap-1 items-end w-full'>
-                      <div className='flex size-8'>
+                      <div className='flex'>
                         {message.isNewUserBlock && 
                           <AvatarImage
                             src={userMap.get(message.senderID)?.profileImg}
-                            className='rounded-full'/>}
+                            className='rounded-full size-8'/>}
                       </div>
                       <div className={`bg-violet-300 rounded-sm rounded-r-xl p-2 max-w-[70%] overflow-clip ${!isInFirstBlock || "rounded-bl-xl"} ${!isInLastBlock || "rounded-tl-xl"}`}>
                         <span>
