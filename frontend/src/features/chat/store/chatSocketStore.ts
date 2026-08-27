@@ -7,9 +7,7 @@ import api from "../../../lib/api.config";
 import type { Conversation } from "../../../shared/types/conversation.types";
 import queryClient from "../../../lib/queryClient";
 import { manageConversationSocket, updateConversationWithMessage } from "../service/conversation.service";
-
-const baseURL = import.meta.env.VITE_SOCKET_URL
-
+import { clientSocket } from "../../../lib/socket.config";
 interface SocketStore {
     socket: Socket | null | undefined,
     connectSocket: () => void,
@@ -24,10 +22,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
         if(existingSocket)
             return;
 
-        const socket: Socket = io(baseURL, {
-            transports: ["websocket"],
-            withCredentials: true,
-        })
+        const socket: Socket = clientSocket;
 
         console.log("Connecting to socket server at", socket.id)
         

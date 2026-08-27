@@ -23,8 +23,13 @@ import { app, server } from "./socket/socket.ts"
 
 const PORT = parseInt(process.env.PORT || "5000");
 
+const allowedOrigins = ["http://localhost:5001", "http://192.168.1.52:5001"];
+if (process.env.CLIENT_URL) {
+    allowedOrigins.push(process.env.CLIENT_URL);
+}
+
 app.use(cors({
-    origin: ["http://localhost:5001", "http://192.168.1.52:5001"],
+    origin: allowedOrigins,
     credentials: true,
 }));
 app.use(express.json());
