@@ -29,7 +29,7 @@ if (process.env.CLIENT_URL) {
 }
 
 app.use(cors({
-    origin: allowedOrigins,
+    origin: process.env.CLIENT_URL,
     credentials: true,
 }));
 app.use(express.json());
