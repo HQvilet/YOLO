@@ -8,6 +8,10 @@ import type { Conversation } from "../../../shared/types/conversation.types";
 import queryClient from "../../../lib/queryClient";
 import { manageConversationSocket, updateConversationWithMessage } from "../service/conversation.service";
 import { clientSocket } from "../../../lib/socket.config";
+
+const baseURL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000"
+
+
 interface SocketStore {
     socket: Socket | null | undefined,
     connectSocket: () => void,
@@ -22,7 +26,10 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
         if(existingSocket)
             return;
 
-        const socket: Socket = clientSocket;
+        const socket: Socket = io(baseURL, {
+            transports: ["websocket"],
+            withCredentials: true,
+        });
 
         console.log("Connecting to socket server at", socket.id)
         

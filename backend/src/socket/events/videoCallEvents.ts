@@ -8,47 +8,54 @@ export function setUpVideoCallEventListeners(socket: Socket){
   //----------WebRTC signaling events-----------
   // User joins a room
   socket.on('join-room', ({roomId, streamState}: {roomId: string; streamState?: {camera: boolean; microphone: boolean}}) => { 
-    const userJoined = () => {
-      console.log(`User ${socket.user.username} joined ${roomId}`)
-      // socket.join(roomId);
-      const existingUsers = videoCallRooms.get(roomId)?.participantsWithState;
-      const users = existingUsers?.entries().map(([k, v]) => ({participantId: k, camera: v.camera, microphone: v.microphone})).toArray()
+    try{
+      const userJoined = () => {
+        console.log(`User ${socket.user.username} joined ${roomId}`)
+        // socket.join(roomId);
+        const existingUsers = videoCallRooms.get(roomId)?.participantsWithState;
+        const users = Array.from(existingUsers?.entries() ?? []).map(
+          ([k, v]) => ({participantId: k, camera: v.camera, microphone: v.microphone})
+        )
 
-      socket.to(roomId).emit('user-joined', { userId: socket.user._id.toString(), roomId });
-      io.to(roomId).emit('existing-users', { participants: users, roomId });
-    }
-
-    let room = videoCallRooms.get(roomId);
-    if(!room){
-      room = {
-          participantsWithState: new Map([[socket.user._id, streamState ?? { camera: true, microphone: true }]]), 
-          roomId
-        }
-      videoCallRooms.set(
-        roomId, room
-      );
-      userJoined()
-      return;
-    }
-
-    if(room.participantsWithState.has(socket.user._id)){
-      console.log(`User ${socket.user.username} already in room.`)
-      return;
-    }
-    
-    if(videoCallRooms.has(roomId)){
-      if(!videoCallRooms.get(roomId)?.participantsWithState.has(socket.user._id)){
-        videoCallRooms.get(roomId)?.participantsWithState.set(socket.user._id, streamState ?? { camera: true, microphone: true });
-        userJoined()
+        socket.to(roomId).emit('user-joined', { userId: socket.user._id.toString(), roomId });
+        io.to(roomId).emit('existing-users', { participants: users, roomId });
       }
-    }else{
-      videoCallRooms.set(
-        roomId, {
-          participantsWithState: new Map([[socket.user._id, streamState ?? { camera: true, microphone: true }]]), 
-          roomId
+
+      let room = videoCallRooms.get(roomId);
+      if(!room){
+        room = {
+            participantsWithState: new Map([[socket.user._id, streamState ?? { camera: true, microphone: true }]]), 
+            roomId
+          }
+        videoCallRooms.set(
+          roomId, room
+        );
+        userJoined()
+        return;
+      }
+
+      if(room.participantsWithState.has(socket.user._id)){
+        console.log(`User ${socket.user.username} already in room.`)
+        return;
+      }
+      
+      if(videoCallRooms.has(roomId)){
+        if(!videoCallRooms.get(roomId)?.participantsWithState.has(socket.user._id)){
+          videoCallRooms.get(roomId)?.participantsWithState.set(socket.user._id, streamState ?? { camera: true, microphone: true });
+          userJoined()
         }
-      );
-      userJoined()
+      }else{
+        videoCallRooms.set(
+          roomId, {
+            participantsWithState: new Map([[socket.user._id, streamState ?? { camera: true, microphone: true }]]), 
+            roomId
+          }
+        );
+        userJoined()
+      } 
+    } catch(err){
+      console.log("Error joining room:", err)
+      io.to(socket.id).emit('error', { message: "Error joining room." });
     }
   });
 
