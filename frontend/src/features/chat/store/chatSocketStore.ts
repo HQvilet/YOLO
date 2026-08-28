@@ -31,7 +31,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
             withCredentials: true,
         });
 
-        console.log("Connecting to socket server at", socket.id)
+        console.log("Connecting to socket server, id: ", socket.id)
         
         socket.on('connect_error', function(err){
             console.log('Connection Failed', err);

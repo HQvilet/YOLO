@@ -4,13 +4,6 @@ FROM node:20-alpine AS build
 # Set working directory
 WORKDIR /app
 
-# 1. Declare Docker build arguments
-ARG VITE_API_URL
-ARG VITE_SOCKET_URL
-
-# 2. Assign them to environment variables for Vite
-ENV VITE_API_URL=$VITE_API_URL
-ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
 
 # Copy package files to leverage Docker caching
 COPY package*.json ./
@@ -20,6 +13,17 @@ RUN npm install
 
 # Copy the rest of the application files
 COPY . .
+
+# 1. Declare Docker build arguments
+ARG VITE_API_URL=""
+ARG VITE_SOCKET_URL=""
+
+# 2. Assign them to environment variables for Vite
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
+
+RUN echo "VITE_API_URL is set to: $VITE_API_URL"
+RUN echo "VITE_SOCKET_URL is set to: $VITE_SOCKET_URL"
 
 # Build the application
 RUN npm run build

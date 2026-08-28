@@ -32,6 +32,8 @@ function App() {
     return () => disconnectSocket()
   }, [connectSocket, disconnectSocket, authUser])
 
+  console.log("Auth Ussser:", import.meta.env)
+
   if (isLoading) return null // or a loading spinner
   // if (error) return <div>Error loading user</div>
   

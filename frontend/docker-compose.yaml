@@ -5,9 +5,13 @@ services:
     image: yolo-frontend:latest
     build:
       context: .
-      dockerfile: Dockerfile
-    env_file:
-      - .env.development
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+      dockerfile: Dockerfile.vercel
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+      - VITE_SOCKET_URL=${VITE_SOCKET_URL}
     ports:
       - "5001:80"
     restart: unless-stopped
