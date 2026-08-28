@@ -9,7 +9,7 @@ import queryClient from "../../../lib/queryClient";
 import { manageConversationSocket, updateConversationWithMessage } from "../service/conversation.service";
 import { clientSocket } from "../../../lib/socket.config";
 
-const baseURL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000"
+const baseURL = import.meta.env.VITE_SOCKET_URL
 
 
 interface SocketStore {
