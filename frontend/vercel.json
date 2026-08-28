@@ -4,7 +4,7 @@
     "app": {
       "root": ".",
       "entrypoint": "Dockerfile.vercel",
-      "buildCommand": "docker build -t --build-arg VITE_API_URL=${VITE_API_URL} --build-arg VITE_SOCKET_URL=${VITE_SOCKET_URL} web-app .",
+      "buildCommand": "docker build -t --build-arg VITE_API_URL=$VITE_API_URL --build-arg VITE_SOCKET_URL=$VITE_SOCKET_URL web-app .",
       "runtime": "container"
     }
   },
