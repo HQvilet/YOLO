@@ -2,16 +2,13 @@ version: '3.8'
 
 services:
   frontend:
-    image: yolo-frontend:latest
+    image: web-app:latest
     build:
       context: .
-      args:
-        VITE_API_URL: ${VITE_API_URL}
-        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+      # args:
+      #   VITE_API_URL: ${VITE_API_URL}
+      #   VITE_SOCKET_URL: ${VITE_SOCKET_URL}
       dockerfile: Dockerfile.vercel
-    environment:
-      - VITE_API_URL=${VITE_API_URL}
-      - VITE_SOCKET_URL=${VITE_SOCKET_URL}
     ports:
       - "5001:80"
     restart: unless-stopped

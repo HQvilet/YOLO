@@ -1,7 +1,8 @@
 import axios from "axios"
+import { API_SERVER_URL } from "./server.config";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_SERVER_URL,
   withCredentials: true
 });
 

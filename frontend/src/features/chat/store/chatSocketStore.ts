@@ -8,8 +8,9 @@ import type { Conversation } from "../../../shared/types/conversation.types";
 import queryClient from "../../../lib/queryClient";
 import { manageConversationSocket, updateConversationWithMessage } from "../service/conversation.service";
 import { clientSocket } from "../../../lib/socket.config";
+import { SOCKET_SERVER_URL } from "../../../lib/server.config";
 
-const baseURL = import.meta.env.VITE_SOCKET_URL
+const baseURL = SOCKET_SERVER_URL
 
 
 interface SocketStore {
